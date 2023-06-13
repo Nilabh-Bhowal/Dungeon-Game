@@ -28,37 +28,31 @@ class Player:
 def check_passability(player, current_room, rooms):
     for room in rooms:
         if room != current_room:
-            pu = player.rect.y - player.rect.height < room.rect.y + room.rect.height and player.rect.y > room.rect.y and player.rect.x >= room.rect.x and player.rect.x + player.rect.width < room.rect.x + room.rect.width
-            pd = player.rect.y + 2 * player.rect.height > room.rect.y and player.rect.y + player.rect.height < room.rect.y + room.rect.height and player.rect.x >= room.rect.x and player.rect.x + player.rect.width < room.rect.x + room.rect.width
-            pl = player.rect.x - player.rect.width < room.rect.x + room.rect.width and player.rect.x > room.rect.x and player.rect.y >= room.rect.y and player.rect.y + player.rect.height < room.rect.y + room.rect.height
-            pr = player.rect.x + 2 * player.rect.width > room.rect.x and player.rect.x + player.rect.width < room.rect.x + room.rect.width and player.rect.y >= room.rect.y and player.rect.y + player.rect.height < room.rect.y + room.rect.height
-            if pu or pd or pl or pr:
-                return pu, pd, pl, pr
-    return pu, pd, pl, pr
+            pu = player.rect.y - player.rect.height < room.rect.y + room.rect.height and player.rect.x < room.rect.x and player.rect.x + player.rect.width > room.rect.x + room.rect.width
+            pd = player.rect.y + 2 * player.rect.height > room.rect.y and player.rect.x < room.rect.x and player.rect.x + player.rect.width > room.rect.x + room.rect.width
+            pl = player.rect.x - player.rect.width < room.rect.x + room.rect.width and player.rect.y < room.rect.y and player.rect.y + player.rect.height > room.rect.y + room.rect.height
+            pr = player.rect.x + 2 * player.rect.width > room.rect.x and player.rect.y >= room.rect.y and player.rect.y + player.rect.height < room.rect.y + room.rect.height
+            print(pr)
+            return pu, pd, pl, pr
 
 def collide(player, rooms):
     for room in rooms:
         if player.rect.colliderect(room):
             pu, pd, pl, pr = check_passability(player, room, rooms)
-            if not pl and player.rect.x <= room.rect.x:
-                player.rect.x = room.rect.x + 5
-                player.movement[0] = 0
-            elif not pr and player.rect.x + player.rect.width >= room.rect.x + room.rect.width:
-                player.rect.x = room.rect.x + room.rect.width - player.rect.width - 5
-                player.movement[0] = 0
-            
-            if not pu and player.rect.y <= room.rect.y:
-                player.rect.y = room.rect.y + 5
-                player.movement[1] = 0
-            elif not pd and player.rect.y + player.rect.height >= room.rect.y + room.rect.height:
-                player.rect.y = room.rect.y + room.rect.height - player.rect.height - 5
-                player.movement[1] = 0
+            if not pl:
+                player.rect.x = max(player.rect.x, room.rect.x)
+            if not pr:
+                player.rect.x = min(player.rect.x, room.rect.x + room.rect.width - player.rect.width)
+            if not pd:
+                player.rect.y = max(player.rect.y, room.rect.y)
+            if not pu:
+                player.rect.y = min(player.rect.y, room.rect.y + room.rect.height - player.rect.height)
 
 
 scroll = [0, 0]
 
 player = Player()
-dungeons = [dungeon.DungeonRoom(128, -152), dungeon.Corridor(-128, -152), dungeon.Corridor(1152, -152)]
+dungeons = [dungeon.DungeonRoom(128, -152), dungeon.Corridor(0, -152)]
 
 clock = pygame.time.Clock()
 running = True

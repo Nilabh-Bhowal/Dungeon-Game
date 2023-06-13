@@ -10,7 +10,7 @@ class DungeonRoom:
 
 class Corridor:
     def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 256, 128)
+        self.rect = pygame.Rect(x, y, 256, 64)
         self.color = (50, 0, 205)
 
     def draw(self, screen, scroll):

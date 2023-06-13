@@ -42,17 +42,19 @@ def collide(player, rooms):
             pu, pd, pl, pr = check_passability(player, room, rooms)
             if not pl and player.rect.x <= room.rect.x:
                 player.rect.x = room.rect.x + 5
-                player.movement[0] = 0
+                player.speed = 0
             elif not pr and player.rect.x + player.rect.width >= room.rect.x + room.rect.width:
                 player.rect.x = room.rect.x + room.rect.width - player.rect.width - 5
-                player.movement[0] = 0
+            else:
+                player.speed = 10
             
             if not pu and player.rect.y <= room.rect.y:
                 player.rect.y = room.rect.y + 5
-                player.movement[1] = 0
+                player.speed = 0
             elif not pd and player.rect.y + player.rect.height >= room.rect.y + room.rect.height:
                 player.rect.y = room.rect.y + room.rect.height - player.rect.height - 5
-                player.movement[1] = 0
+            else:
+                player.speed = 10
 
 
 scroll = [0, 0]

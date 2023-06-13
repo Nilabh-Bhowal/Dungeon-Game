@@ -49,10 +49,12 @@ def collide(player, rooms):
             
             if not pu and player.rect.y <= room.rect.y:
                 player.rect.y = room.rect.y + 5
-                player.movement[1] = 0
+                player.speed = 0
             elif not pd and player.rect.y + player.rect.height >= room.rect.y + room.rect.height:
                 player.rect.y = room.rect.y + room.rect.height - player.rect.height - 5
-                player.movement[1] = 0
+                player.speed = 0
+            else:
+                player.speed = 10
 
 
 scroll = [0, 0]
