@@ -6,7 +6,8 @@ class DungeonRoom:
         self.color = (50, 0, 205)
 
     def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        pygame.draw.rect(screen, self.color,
+                        (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 class Corridor:
     def __init__(self, x, y):
@@ -14,4 +15,5 @@ class Corridor:
         self.color = (50, 0, 205)
 
     def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        pygame.draw.rect(screen, self.color,
+                        (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
