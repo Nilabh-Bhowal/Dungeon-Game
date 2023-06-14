@@ -72,12 +72,13 @@ def collide(player, rooms):
 
 
 # scroll for camera
+true_scroll = [0, 0]
 scroll = [0, 0]
 
 # initialize objects
 player = Player()
 dungeons = [dungeon.DungeonRoom(128, -152), dungeon.Corridor(-128, -152),
-            dungeon.Corridor(1152, -152), dungeon.Corridor(528, -280)]
+            dungeon.Corridor(1152, -152), dungeon.Corridor(528, -280), dungeon.Corridor(528, -280)]
 
 # controls fps
 clock = pygame.time.Clock()
@@ -110,10 +111,13 @@ while running:
                 player.movement[1] = 0
 
     # sets the scroll value
-    scroll[0] += (player.rect.x - (WIDTH / 2 - player.rect.width / 2)
-                  - scroll[0]) / 10
-    scroll[1] += (player.rect.y - (HEIGHT / 2 - player.rect.height / 2)
-                  - scroll[1]) / 10
+    true_scroll[0] += (player.rect.x - (WIDTH / 2 - player.rect.width / 2)
+                       - true_scroll[0]) / 10
+    true_scroll[1] += (player.rect.y - (HEIGHT / 2 - player.rect.height / 2)
+                       - true_scroll[1]) / 10
+    scroll = true_scroll.copy()
+    scroll[0] = int(scroll[0])
+    scroll[1] = int(scroll[1])
 
     # moves objects
     player.move(dungeons)
