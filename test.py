@@ -41,24 +41,24 @@ def collide(player, rooms):
         if player.rect.colliderect(room):
             pu, pd, pl, pr = check_passability(player, room, rooms)
             if not pl and player.rect.x <= room.rect.x:
+                player.movement[0] = 0
                 player.rect.x = room.rect.x + 5
-                player.movement[0] = 0
             elif not pr and player.rect.x + player.rect.width >= room.rect.x + room.rect.width:
-                player.rect.x = room.rect.x + room.rect.width - player.rect.width - 5
                 player.movement[0] = 0
+                player.rect.x = room.rect.x + room.rect.width - player.rect.width - 5
             
             if not pu and player.rect.y <= room.rect.y:
+                player.movement[1] = 0
                 player.rect.y = room.rect.y + 5
-                player.movement[1] = 0
             elif not pd and player.rect.y + player.rect.height >= room.rect.y + room.rect.height:
-                player.rect.y = room.rect.y + room.rect.height - player.rect.height - 5
                 player.movement[1] = 0
+                player.rect.y = room.rect.y + room.rect.height - player.rect.height - 5
 
 
 scroll = [0, 0]
 
 player = Player()
-dungeons = [dungeon.DungeonRoom(128, -152), dungeon.Corridor(-128, -152), dungeon.Corridor(1152, -152)]
+dungeons = [dungeon.DungeonRoom(128, -152), dungeon.Corridor(-128, -152), dungeon.Corridor(1152, -152), dungeon.Corridor(528, -280)]
 
 clock = pygame.time.Clock()
 running = True
