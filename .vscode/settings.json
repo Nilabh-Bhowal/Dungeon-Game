@@ -1,12 +1,15 @@
 {
     "cSpell.words": [
+        "blit",
+        "collidepoint",
         "colliderect",
         "KEYDOWN",
         "pygame",
-        "rects"
+        "rects",
+        "sourcery"
     ],
     "[python]": {
-        "editor.defaultFormatter": "ms-python.autopep8"
+        "editor.defaultFormatter": "ms-python.python"
     },
     "python.formatting.provider": "none",
     "python.analysis.typeCheckingMode": "off"

@@ -1,8 +1,8 @@
 import pygame
 
 
-def display_text(font, size, color, text, x, y, screen):
-    font = pygame.font.Font(font, size)
+def display_text(font_file, size, color, text, x, y, screen):
+    font = pygame.font.SysFont(font_file, size)
     text = font.render(text, True, color)
     text_rect = text.get_rect()
     screen.blit(text, (x - text_rect.width // 2, y - text_rect.height // 2))
@@ -20,18 +20,21 @@ class Button:
     def draw(self, screen):
 
         if self.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
-            hover = True
             if pygame.mouse.get_pressed()[0]:
-                pressed = True
-                print("a")
+                pressed = self.normal_draw(True, screen)
             else:
                 pressed = False
+                pygame.draw.rect(screen, self.color, (self.rect.x - 5,
+                                 self.rect.y - 5, self.rect.width + 10, self.rect.height + 10))
+                display_text(self.font, self.size + 5, self.text_color, self.text, self.rect.x +
+                             self.rect.width // 2, self.rect.y + self.rect.height // 2, screen)
         else:
-            hover = False
-            pressed = False
+            pressed = self.normal_draw(False, screen)
+        return pressed
 
+    def normal_draw(self, pressed, screen):
+        result = pressed
+        pygame.draw.rect(screen, self.color, self.rect)
         display_text(self.font, self.size, self.text_color, self.text, self.rect.x +
                      self.rect.width // 2, self.rect.y + self.rect.height // 2, screen)
-
-        pygame.draw.rect(screen, self.color, self.rect)
-        return pressed
+        return result
