@@ -1,7 +1,10 @@
 import pygame
+import math
 
 # import other python files in project
 import assets.scripts.dungeon as dungeon
+import assets.scripts.entity as entity
+import assets.scripts.enemy as enemy
 
 pygame.init()
 pygame.display.init()
@@ -14,50 +17,42 @@ screen = pygame.Surface((1280, 720))
 
 
 # player class
-class Player:
+class Player(entity.Entity):
     def __init__(self):
-        self.rect = pygame.Rect(304, 164, 64, 64)
-        self.speed = 10
-        self.movement = [0, 0]
-        self.color = (255, 255, 255)
-        self.img = pygame.transform.scale2x(pygame.image.load("player.png"))
-        self.direction = "down"
+        super().__init__(304, 164, 64, 64, 10, "player.png")
         self.sword = Sword(self)
 
     def move(self, rooms):
-        self.rect.x += self.speed * self.movement[0]
-        self.rect.y += self.speed * self.movement[1]
-        collide(self, rooms)
+        super().move(rooms)
         self.sword.update()
 
     def draw(self, screen, scroll):
-        if self.direction == "left":
-            screen.blit(pygame.transform.rotate(self.img, -90),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
-        elif self.direction == "right":
-            screen.blit(pygame.transform.rotate(self.img, 90),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
-        elif self.direction == "up":
-            screen.blit(pygame.transform.rotate(self.img, 180),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
-        else:
-            screen.blit(self.img, (self.rect.x -
-                        scroll[0], self.rect.y - scroll[1]))
         self.sword.draw(screen, scroll)
+        super().draw(screen, scroll)
 
 
 class Sword:
     def __init__(self, holder):
         self.holder = holder
         self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 16, 32)
+        self.mode = "held"
+        self.timer = 15
 
     def update(self):
+        print(self.mode)
+        if self.mode == "held":
+            self.timer = 60
+        else:
+            self.timer -= 1
+            if self.timer == 0:
+                self.mode = "held"
+        # sourcery skip: hoist-statement-from-if, merge-duplicate-blocks, remove-redundant-if, switch
         if self.holder.direction == "up":
-            self.rect.x = self.holder.rect.x
-            self.rect.y = self.holder.rect.y - self.rect.height
+            self.rect.right = self.holder.rect.right
+            self.rect.top = self.holder.rect.y - self.rect.height + 16
         elif self.holder.direction == "down":
-            self.rect.x = self.holder.rect.x
-            self.rect.y = self.holder.rect.y - self.rect.height
+            self.rect.left = self.holder.rect.left
+            self.rect.top = self.holder.rect.bottom - 16
         elif self.holder.direction == "left":
             self.rect.x = self.holder.rect.x
             self.rect.y = self.holder.rect.y - self.rect.height
@@ -70,44 +65,7 @@ class Sword:
 
 
 # check if player can pass into other rooms
-def can_pass(player, current_room, rooms):
-    # sourcery skip: instance-method-first-arg-name
-    pu, pd, pl, pr = [False, False, False, False]
-    for room in rooms:
-        if room != current_room:
-            pu = pu or player.rect.top - player.rect.height < room.rect.bottom \
-                and player.rect.top > room.rect.top \
-                and player.rect.left >= room.rect.left \
-                and player.rect.right <= room.rect.right
-            pd = pd or player.rect.bottom + player.rect.height > room.rect.top \
-                and player.rect.bottom < room.rect.bottom\
-                and player.rect.left >= room.rect.left \
-                and player.rect.right <= room.rect.right
-            pl = pl or player.rect.left - player.rect.width < room.rect.right \
-                and player.rect.left > room.rect.left \
-                and player.rect.top >= room.rect.top \
-                and player.rect.bottom <= room.rect.bottom
-            pr = pr or player.rect.right + player.rect.width > room.rect.left \
-                and player.rect.right < room.rect.right \
-                and player.rect.top >= room.rect.top \
-                and player.rect.bottom <= room.rect.bottom
-    return pu, pd, pl, pr
 
-
-# control player collision within room
-def collide(player, rooms):
-    for room in rooms:
-        if player.rect.colliderect(room):
-            pu, pd, pl, pr = can_pass(player, room, rooms)
-            if not pl and player.rect.left <= room.rect.left + 5:
-                player.rect.left = room.rect.left + 11
-            elif not pr and player.rect.right >= room.rect.right - 5:
-                player.rect.left = room.rect.right - player.rect.width - 11
-
-            if not pu and player.rect.top < room.rect.top + 5:
-                player.rect.top = room.rect.top + 11
-            elif not pd and player.rect.bottom >= room.rect.bottom - 5:
-                player.rect.top = room.rect.bottom - player.rect.height - 11
 
 
 # allows to load levels from file
@@ -117,6 +75,7 @@ def load_level(level):
         items = [eval(item) for item in items]
         rooms = []
         chests = []
+        enemies = []
         for item in items:
             if item[0] == 0:
                 rooms.append(dungeon.DungeonRoom(item[1], item[2]))
@@ -124,8 +83,10 @@ def load_level(level):
                 rooms.append(dungeon.Corridor(item[1], item[2]))
             elif item[0] == 2:
                 chests.append(dungeon.Chest(item[1], item[2]))
+            elif item[0] == 3:
+                enemies.append(enemy.Enemy(item[1], item[2], 64, 64, 5, "player.png"))
 
-    return rooms, chests
+    return rooms, chests, enemies
 
 
 # scroll for camera
@@ -133,7 +94,7 @@ true_scroll = [0, 0]
 scroll = [0, 0]
 
 # load level from file
-dungeons, chests = load_level(0)
+rooms, chests, enemies = load_level(0)
 
 # initialize objects
 player = Player()
@@ -164,6 +125,8 @@ while running:
             if event.key == pygame.K_DOWN:
                 player.movement[1] = 1
                 player.direction = "down"
+            if event.key == pygame.K_SPACE:
+                player.sword.mode = "attack"
 
         # check if key is released to set the movement variable based on that
         if event.type == pygame.KEYUP:
@@ -182,15 +145,19 @@ while running:
     scroll[1] = int(scroll[1])
 
     # moves objects
-    player.move(dungeons)
+    player.move(rooms)
+    for enemy in enemies:
+        enemy.move(player, rooms)
 
     # draws to the screen
     screen.fill((255, 100, 100))
-    for dungeon in dungeons:
-        dungeon.draw(screen, scroll)
+    for room in rooms:
+        room.draw(screen, scroll)
     for chest in chests:
         chest.draw(screen, scroll)
     player.draw(screen, scroll)
+    for enemy in enemies:
+        enemy.draw(screen, scroll)
 
     # updates display
     display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))

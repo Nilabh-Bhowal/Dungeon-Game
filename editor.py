@@ -1,9 +1,8 @@
-import os
-
 import pygame
 
-import dungeon
-import ui
+import assets.scripts.dungeon as dungeon
+import assets.scripts.enemy as enemy
+import assets.scripts.ui as ui
 
 pygame.init()
 
@@ -11,12 +10,7 @@ screen = pygame.display.set_mode((1280, 720))
 
 
 def save(num, level):
-    path = os.path.realpath(__file__)
-    d = os.path.dirname(path)
-    d = d.replace("scripts", "levels")
-    os.chdir(d)
-    print(d)
-    with open(f'{d}/{num}.txt', 'w') as f:
+    with open(f'assets/levels/{num}.txt', 'w') as f:
         for item in level:
             if isinstance(item, dungeon.DungeonRoom):
                 l = 0
@@ -24,16 +18,13 @@ def save(num, level):
                 l = 1
             elif isinstance(item, dungeon.Chest):
                 l = 2
+            elif isinstance(item, enemy.Enemy):
+                l = 3
             f.write(f"[{l}, {item.rect.x}, {item.rect.y}]\n")
 
 
 def load(num):
-    path = os.path.realpath(__file__)
-    d = os.path.dirname(path)
-    d = d.replace("scripts", "levels")
-    os.chdir(d)
-    print(d)
-    with open(f'{d}/{num}.txt', 'r') as f:
+    with open(f'assets/levels/{num}.txt', 'r') as f:
         items = (f.read().splitlines())
         items = [eval(item) for item in items]
         level = []
@@ -44,13 +35,15 @@ def load(num):
                 level.append(dungeon.Corridor(item[1], item[2]))
             elif item[0] == 2:
                 level.append(dungeon.Chest(item[1], item[2]))
+            elif item[0] == 3:
+                level.append(enemy.Enemy(item[1], item[2], 64, 64, 0, "player.png"))
 
     return level
 
 
 def check_collision(placed, level, scroll):
     for item in level:
-        if placed != item and item.rect.colliderect(placed.rect) and not isinstance(placed, dungeon.Chest) and not isinstance(item, dungeon.Chest):
+        if placed != item and item.rect.colliderect(placed.rect) and not isinstance(placed, dungeon.Chest) and not isinstance(item, dungeon.Chest) and not isinstance(item, enemy.Enemy) and not isinstance(placed, enemy.Enemy):
             if placed.rect.bottom > item.rect.top and pygame.mouse.get_pos()[1] + scroll[1] < item.rect.top:
                 placed.rect.bottom = item.rect.top
             elif placed.rect.top < item.rect.bottom and pygame.mouse.get_pos()[1] + scroll[1] > item.rect.bottom:
@@ -65,19 +58,14 @@ scroll = [0, 0]
 cam_movement = [0, 0]
 
 rooms = []
-current_item = "room"
+current_item = "Room"
 level = 0
 
 pressed = False
 
 clock = pygame.time.Clock()
-
-room_button = ui.Button("Comic Sans MS", 15, (255, 255, 0),
-                        "Dungeon Room", 1000, 200, 200, 50)
-corridor_button = ui.Button("Comic Sans MS", 15, (255, 255, 0),
-                            "Corridor", 1000, 300, 200, 50)
-chest_button = ui.Button("Comic Sans MS", 15, (255, 255, 0),
-                         "Chest", 1000, 400, 200, 50)
+buttons = [ui.Button("Comic Sans MS", 15, (255, 255, 0), "Room", 1000, 200, 200, 50), ui.Button("Comic Sans MS", 15, (255, 255, 0), "Corridor", 1000, 300, 200, 50), ui.Button(
+    "Comic Sans MS", 15, (255, 255, 0), "Chest", 1000, 400, 200, 50), ui.Button("Comic Sans MS", 15, (255, 255, 0), "Enemy", 1000, 500, 200, 50)]
 
 running = True
 while running:
@@ -100,37 +88,39 @@ while running:
                 save(level, rooms)
             if event.key == pygame.K_l:
                 rooms = load(level)
+            if event.key == pygame.K_c:
+                rooms = []
 
             if event.key == pygame.K_0:
                 level = 0
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_1:
                 level = 1
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_2:
                 level = 2
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_3:
                 level = 3
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_4:
                 level = 4
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_5:
                 level = 5
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_6:
                 level = 6
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_7:
                 level = 7
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_8:
                 level = 8
-                rooms = load(level)
+                rooms = []
             elif event.key == pygame.K_9:
                 level = 9
-                rooms = load(level)
+                rooms = []
 
         if event.type == pygame.KEYUP:
             if event.key in [pygame.K_RIGHT, pygame.K_LEFT]:
@@ -140,15 +130,17 @@ while running:
 
     if pygame.mouse.get_pos()[0] <= 980 and pygame.mouse.get_pressed()[0] and not pressed:
         pressed = True
-        if current_item == "room":
+        if current_item == "Room":
             rooms.append(dungeon.DungeonRoom(round((pygame.mouse.get_pos()[
                          0] + scroll[0] - 512) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 512) / 32) * 32))
-        elif current_item == "corridor":
+        elif current_item == "Corridor":
             rooms.append(dungeon.Corridor(round((pygame.mouse.get_pos()[
                          0] + scroll[0] - 128) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 64) / 32) * 32))
-        elif current_item == "chest":
+        elif current_item == "Chest":
             rooms.append(dungeon.Chest(round((pygame.mouse.get_pos()[
                          0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
+        elif current_item == "Enemy":
+            rooms.append(enemy.Enemy(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32, 64, 64, 0, "player.png"))
     if not pygame.mouse.get_pressed()[0]:
         pressed = False
 
@@ -176,12 +168,9 @@ while running:
                          scroll[1] % 32), (980, i * 32 - scroll[1] % 32))
     pygame.draw.rect(screen, (0, 0, 0), (980, 0, 300, 720))
 
-    if room_button.draw(screen):
-        current_item = "room"
-    if corridor_button.draw(screen):
-        current_item = "corridor"
-    if chest_button.draw(screen):
-        current_item = "chest"
+    for button in buttons:
+        if button.draw(screen):
+            current_item = button.text
 
     pygame.display.update()
     clock.tick(60)
