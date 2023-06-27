@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Editor",
+            "type": "python",
+            "request": "launch",
+            "program": "./editor.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "./test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Game",
+            "type": "python",
+            "request": "launch",
+            "program": "./main.py",
+            "justMyCode": true
+        }
+    ]
+}

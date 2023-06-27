@@ -1,0 +1,5 @@
+.vscode/
+.history/
+__pycache__/
+.pre-commit-config.yaml
+.sourcery.yaml
