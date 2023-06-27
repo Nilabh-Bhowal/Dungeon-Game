@@ -63,11 +63,7 @@ class Sword:
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
-
-# check if player can pass into other rooms
-
-
-
+        
 # allows to load levels from file
 def load_level(level):
     with open(f"assets/levels/{level}.txt", "r") as f:
