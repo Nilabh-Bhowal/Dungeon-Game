@@ -1,7 +1,7 @@
 import pygame
 import math
 
-# import other python files in project
+# import other files in project
 import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
@@ -21,49 +21,70 @@ class Player(entity.Entity):
     def __init__(self):
         super().__init__(304, 164, 64, 64, 10, "player.png")
         self.sword = Sword(self)
+        self.attack = False
 
     def move(self, rooms):
         super().move(rooms)
-        self.sword.update()
+        self.attack = self.sword.update()
 
     def draw(self, screen, scroll):
-        self.sword.draw(screen, scroll)
+
         super().draw(screen, scroll)
+        self.sword.draw(screen, scroll)
 
 
 class Sword:
     def __init__(self, holder):
         self.holder = holder
-        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 16, 32)
+        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 32, 32)
+        self.range_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height)
         self.mode = "held"
         self.timer = 15
 
     def update(self):
-        print(self.mode)
-        if self.mode == "held":
-            self.timer = 60
-        else:
-            self.timer -= 1
-            if self.timer == 0:
-                self.mode = "held"
-        # sourcery skip: hoist-statement-from-if, merge-duplicate-blocks, remove-redundant-if, switch
+
+        self.update_mode()
+
         if self.holder.direction == "up":
             self.rect.right = self.holder.rect.right
-            self.rect.top = self.holder.rect.y - self.rect.height + 16
+            self.rect.top = self.holder.rect.top - self.rect.height + 16
         elif self.holder.direction == "down":
             self.rect.left = self.holder.rect.left
             self.rect.top = self.holder.rect.bottom - 16
         elif self.holder.direction == "left":
-            self.rect.x = self.holder.rect.x
-            self.rect.y = self.holder.rect.y - self.rect.height
+            self.rect.top = self.holder.rect.top
+            self.rect.left = self.holder.rect.left - self.rect.width + 16
         else:
-            self.rect.x = self.holder.rect.x
-            self.rect.y = self.holder.rect.y - self.rect.height
+            self.rect.bottom = self.holder.rect.bottom
+            self.rect.left = self.holder.rect.right - 16
+
+        return(self.attack())
+
+    def attack(self):
+        if self.mode == "attack":
+            if self.holder.direction == "up":
+                self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
+            elif self.holder.direction == "down":
+                self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
+            elif self.holder.direction == "left":
+                self.range_rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+            else:
+                self.range_rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+            return True
+        return False
+
+    def update_mode(self):
+        if self.mode == "held":
+            self.timer = 15
+        else:
+            self.timer -= 1
+            if self.timer == 0:
+                self.mode = "held"
 
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
-        
+
 # allows to load levels from file
 def load_level(level):
     with open(f"assets/levels/{level}.txt", "r") as f:
@@ -121,7 +142,7 @@ while running:
             if event.key == pygame.K_DOWN:
                 player.movement[1] = 1
                 player.direction = "down"
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and player.sword.mode == "held":
                 player.sword.mode = "attack"
 
         # check if key is released to set the movement variable based on that
