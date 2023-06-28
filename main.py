@@ -1,5 +1,6 @@
 import pygame
 import math
+import time
 
 # import other files in project
 import assets.scripts.dungeon as dungeon
@@ -19,16 +20,15 @@ screen = pygame.Surface((1280, 720))
 # player class
 class Player(entity.Entity):
     def __init__(self):
-        super().__init__(304, 164, 64, 64, 10, "player.png")
+        super().__init__(304, 164, 64, 64, 10, 100, "player.png")
         self.sword = Sword(self)
         self.attack = False
 
-    def move(self, rooms):
-        super().move(rooms)
+    def move(self, dt, rooms):
+        super().move(dt, rooms)
         self.attack = self.sword.update()
 
     def draw(self, screen, scroll):
-
         super().draw(screen, scroll)
         self.sword.draw(screen, scroll)
 
@@ -58,28 +58,27 @@ class Sword:
             self.rect.bottom = self.holder.rect.bottom
             self.rect.left = self.holder.rect.right - 16
 
-        return(self.attack())
+        if self.holder.direction == "up":
+            self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
+        elif self.holder.direction == "down":
+            self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
+        elif self.holder.direction == "left":
+            self.range_rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+        else:
+            self.range_rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
 
-    def attack(self):
-        if self.mode == "attack":
-            if self.holder.direction == "up":
-                self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
-            elif self.holder.direction == "down":
-                self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
-            elif self.holder.direction == "left":
-                self.range_rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-            else:
-                self.range_rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-            return True
-        return False
+        return self.mode == "attack"
 
     def update_mode(self):
-        if self.mode == "held":
-            self.timer = 15
-        else:
+        if self.mode != "held":
             self.timer -= 1
-            if self.timer == 0:
+            if 0 < self.timer <= 13:
+                self.mode = "cooldown"
+            elif self.timer == 0:
                 self.mode = "held"
+
+        else:
+            self.timer = 15
 
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
@@ -101,7 +100,7 @@ def load_level(level):
             elif item[0] == 2:
                 chests.append(dungeon.Chest(item[1], item[2]))
             elif item[0] == 3:
-                enemies.append(enemy.Enemy(item[1], item[2], 64, 64, 5, "player.png"))
+                enemies.append(enemy.Enemy(item[1], item[2], 64, 64, 3, 70, "player.png"))
 
     return rooms, chests, enemies
 
@@ -118,6 +117,8 @@ player = Player()
 
 # controls fps
 clock = pygame.time.Clock()
+pt = time.time()
+dt = 1/60
 
 # main loop
 running = True
@@ -154,17 +155,19 @@ while running:
 
     # sets the scroll value
     true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
-                       - true_scroll[0]) / 25
+                       - true_scroll[0]) / 25 * dt
     true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
-                       - true_scroll[1]) / 25
+                       - true_scroll[1]) / 25 * dt
     scroll = true_scroll.copy()
     scroll[0] = int(scroll[0])
     scroll[1] = int(scroll[1])
 
     # moves objects
-    player.move(rooms)
+    player.move(dt, rooms)
     for enemy in enemies:
-        enemy.move(player, rooms)
+        enemy.move(player, dt, rooms)
+        if not enemy.alive:
+            enemies.remove(enemy)
 
     # draws to the screen
     screen.fill((255, 100, 100))
@@ -179,6 +182,10 @@ while running:
     # updates display
     display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
     pygame.display.update()
+
     clock.tick(60)
+    now = time.time()
+    dt = (now - pt) * 60
+    pt = now
 
 pygame.quit()

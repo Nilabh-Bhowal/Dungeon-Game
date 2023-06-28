@@ -3,16 +3,18 @@ import pygame
 import assets.scripts.dungeon as dungeon
 
 class Entity:
-    def __init__(self, x, y, width, height, speed, img):
+    def __init__(self, x, y, width, height, speed, health, img):
         self.rect = pygame.Rect(x, y, width, height)
         self.speed = speed
         self.movement = [0, 0]
         self.img = pygame.image.load(f"assets/images/entity/{img}")
         self.direction = "up"
+        self.health = health
+        self.alive = True
 
-    def move(self, rooms):
-        self.rect.x += self.speed * self.movement[0]
-        self.rect.y += self.speed * self.movement[1]
+    def move(self, dt, rooms):
+        self.rect.x += self.speed * self.movement[0] * dt
+        self.rect.y += self.speed * self.movement[1] * dt
         dungeon.collide(self, rooms)
 
     def draw(self, screen, scroll):
