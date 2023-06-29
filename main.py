@@ -1,8 +1,10 @@
 import pygame
 import math
 import time
+import sys
 
 # import other files in project
+import assets.scripts.ui as ui
 import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
@@ -15,6 +17,8 @@ WIDTH = 1280
 HEIGHT = 720
 display = pygame.display.set_mode((WIDTH, HEIGHT))
 screen = pygame.Surface((1280, 720))
+
+state = "main menu"
 
 
 # player class
@@ -104,88 +108,113 @@ def load_level(level):
 
     return rooms, chests, enemies
 
+def quit():
+    pygame.quit()
+    sys.exit()
 
-# scroll for camera
-true_scroll = [0, 0]
-scroll = [0, 0]
+def main_menu(state, screen, display):
+    clock = pygame.time.Clock()
+    pt = time.time()
+    dt = 1/60
+    while state == "main menu":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                state = "quit"
 
-# load level from file
-rooms, chests, enemies = load_level(0)
+        display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
+        pygame.display.update()
 
-# initialize objects
-player = Player()
+        clock.tick(60)
+        now = time.time()
+        dt = (now - pt) * 60
+        pt = now
 
-# controls fps
-clock = pygame.time.Clock()
-pt = time.time()
-dt = 1/60
+    if state == "quit":
+        quit()
 
-# main loop
-running = True
-while running:
 
-    for event in pygame.event.get():
-        # check if player quits
-        if event.type == pygame.QUIT:
-            running = False
+def main_loop(level):
+    # scroll for camera
+    true_scroll = [0, 0]
+    scroll = [0, 0]
 
-        # check if key is pressed down, and sets the movement variable based on that
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                player.movement[0] = -1
-                player.direction = "left"
-            if event.key == pygame.K_RIGHT:
-                player.movement[0] = 1
-                player.direction = "right"
-            if event.key == pygame.K_UP:
-                player.movement[1] = -1
-                player.direction = "up"
-            if event.key == pygame.K_DOWN:
-                player.movement[1] = 1
-                player.direction = "down"
-            if event.key == pygame.K_SPACE and player.sword.mode == "held":
-                player.sword.mode = "attack"
+    # load level from file
+    rooms, chests, enemies = load_level(level)
 
-        # check if key is released to set the movement variable based on that
-        if event.type == pygame.KEYUP:
-            if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
-                player.movement[0] = 0
-            if event.key in [pygame.K_UP, pygame.K_DOWN]:
-                player.movement[1] = 0
+    # initialize objects
+    player = Player()
 
-    # sets the scroll value
-    true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
-                       - true_scroll[0]) / 25 * dt
-    true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
-                       - true_scroll[1]) / 25 * dt
-    scroll = true_scroll.copy()
-    scroll[0] = int(scroll[0])
-    scroll[1] = int(scroll[1])
+    # controls fps
+    clock = pygame.time.Clock()
+    pt = time.time()
+    dt = 1/60
 
-    # moves objects
-    player.move(dt, rooms)
-    for enemy in enemies:
-        enemy.move(player, dt, rooms)
-        if not enemy.alive:
-            enemies.remove(enemy)
+    # main loop
+    running = True
+    while running:
 
-    # draws to the screen
-    screen.fill((255, 100, 100))
-    for room in rooms:
-        room.draw(screen, scroll)
-    for chest in chests:
-        chest.draw(screen, scroll)
-    player.draw(screen, scroll)
-    for enemy in enemies:
-        enemy.draw(screen, scroll)
+        for event in pygame.event.get():
+            # check if player quits
+            if event.type == pygame.QUIT:
+                running = False
 
-    # updates display
-    display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
-    pygame.display.update()
+            # check if key is pressed down, and sets the movement variable based on that
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    player.movement[0] = -1
+                    player.direction = "left"
+                if event.key == pygame.K_RIGHT:
+                    player.movement[0] = 1
+                    player.direction = "right"
+                if event.key == pygame.K_UP:
+                    player.movement[1] = -1
+                    player.direction = "up"
+                if event.key == pygame.K_DOWN:
+                    player.movement[1] = 1
+                    player.direction = "down"
+                if event.key == pygame.K_SPACE and player.sword.mode == "held":
+                    player.sword.mode = "attack"
 
-    clock.tick(60)
-    now = time.time()
-    dt = (now - pt) * 60
-    pt = now
+            # check if key is released to set the movement variable based on that
+            if event.type == pygame.KEYUP:
+                if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
+                    player.movement[0] = 0
+                if event.key in [pygame.K_UP, pygame.K_DOWN]:
+                    player.movement[1] = 0
 
-pygame.quit()
+        # sets the scroll value
+        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
+                        - true_scroll[0]) / 25 * dt
+        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
+                        - true_scroll[1]) / 25 * dt
+        scroll = true_scroll.copy()
+        scroll[0] = int(scroll[0])
+        scroll[1] = int(scroll[1])
+
+        # moves objects
+        player.move(dt, rooms)
+        for enemy in enemies:
+            enemy.move(player, dt, rooms)
+            if not enemy.alive:
+                enemies.remove(enemy)
+
+        # draws to the screen
+        screen.fill((255, 100, 100))
+        for room in rooms:
+            room.draw(screen, scroll)
+        for chest in chests:
+            chest.draw(screen, scroll)
+        player.draw(screen, scroll)
+        for enemy in enemies:
+            enemy.draw(screen, scroll)
+
+        # updates display
+        display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+        now = time.time()
+        dt = (now - pt) * 60
+        pt = now
+
+main_menu(state, screen, display)
