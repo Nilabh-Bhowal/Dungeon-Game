@@ -1,40 +1,54 @@
 import pygame
 
 
-def display_text(font_file, size, color, text, x, y, screen):
-    font = pygame.font.SysFont(font_file, size)
-    text = font.render(text, True, color)
+def title(text, x, y, screen):
+    font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 40)
+    text = font.render(text, True, (0, 0, 0))
     text_rect = text.get_rect()
     screen.blit(text, (x - text_rect.width // 2, y - text_rect.height // 2))
 
 
+
 class Button:
-    def __init__(self, font, size, color, text, x, y, width, height, text_color=(0, 0, 0)):
-        self.font = font
-        self.size = size
-        self.color = color
+    def __init__(self, text, x, y, width, height):
         self.text = text
-        self.rect = pygame.Rect(x, y, width, height)
-        self.text_color = text_color
+        self.rect = pygame.Rect(0, 0, width, height)
+        self.rect.centerx = x
+        self.rect.centery = y
 
     def draw(self, screen):
 
         if self.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
-            if pygame.mouse.get_pressed()[0]:
-                pressed = self.normal_draw(True, screen)
-            else:
-                pressed = False
-                pygame.draw.rect(screen, self.color, (self.rect.x - 5,
-                                 self.rect.y - 5, self.rect.width + 10, self.rect.height + 10))
-                display_text(self.font, self.size + 5, self.text_color, self.text, self.rect.x +
-                             self.rect.width // 2, self.rect.y + self.rect.height // 2, screen)
+            return (
+                self.normal_draw(True, screen)
+                if pygame.mouse.get_pressed()[0]
+                else self.hover_draw(screen)
+            )
         else:
-            pressed = self.normal_draw(False, screen)
-        return pressed
+            return self.normal_draw(False, screen)
+
+    def hover_draw(self, screen):
+        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - 15,
+                         self.rect.y - 15, self.rect.width + 30, self.rect.height + 30))
+
+        self.draw_text(screen)
+        return False
 
     def normal_draw(self, pressed, screen):
         result = pressed
-        pygame.draw.rect(screen, self.color, self.rect)
-        display_text(self.font, self.size, self.text_color, self.text, self.rect.x +
-                     self.rect.width // 2, self.rect.y + self.rect.height // 2, screen)
-        return result
+        pygame.draw.rect(screen, (255, 255, 255), self.rect)
+
+        self.draw_text(screen)
+        return(result)
+
+    def draw_text(self, screen):
+        font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 20)
+        text = font.render(self.text, True, (0, 0, 0))
+        text_rect = text.get_rect()
+        screen.blit(
+            text,
+            (
+                self.rect.centerx - text_rect.width // 2,
+                self.rect.centery - text_rect.height // 2,
+            ),
+        )

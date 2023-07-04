@@ -108,32 +108,41 @@ def load_level(level):
 
     return rooms, chests, enemies
 
+
 def quit():
     pygame.quit()
     sys.exit()
 
 def main_menu(state, screen, display):
+    play_button = ui.Button("Play", 640, 360, 500, 100)
+    quit_button = ui.Button("Quit", 640, 510, 500, 100)
+
     clock = pygame.time.Clock()
-    pt = time.time()
-    dt = 1/60
     while state == "main menu":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 state = "quit"
 
+        screen.fill((255, 100, 100))
+        ui.title("Goofy Ahh Dungeon Game ",  640, 200, screen)
+        if play_button.draw(screen):
+            state = "level 0"
+        if quit_button.draw(screen):
+            state = "quit"
+
         display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
-        now = time.time()
-        dt = (now - pt) * 60
-        pt = now
 
     if state == "quit":
         quit()
 
+    elif state == "level 0":
+        main_loop(0, state, screen, display)
 
-def main_loop(level):
+
+def main_loop(level, state, screen, display):
     # scroll for camera
     true_scroll = [0, 0]
     scroll = [0, 0]
