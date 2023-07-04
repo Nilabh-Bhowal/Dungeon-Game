@@ -7,6 +7,8 @@ import assets.scripts.entity as entity
 class Enemy(entity.Entity):
     def __init__(self, x, y, width, height, speed, health, img):
         super().__init__(x, y, width, height, speed, health, img)
+        self.immune = False
+        self.immune_timer = 15
         self.near_player = False
         self.range = random.randint(400, 600)
 
@@ -24,7 +26,22 @@ class Enemy(entity.Entity):
         self.check_damaged(player)
 
     def check_damaged(self, player):
-        if self.rect.colliderect(player.sword.range_rect) and player.attack:
+        if self.rect.colliderect(player.sword.rect) and player.attack and not self.immune:
             self.health -= random.randint(20, 40)
+            self.movement = [0, 0]
+            if player.direction == "left":
+                self.rect.x -= 100
+            elif player.direction == "right":
+                self.rect.x += 100
+            elif player.direction == "up":
+                self.rect.y -= 100
+            else:
+                self.rect.y += 100
+            self.immune = True
+            self.immune_timer = 15
+        if self.immune:
+            self.immune_timer -= 1
+            if self.immune_timer <= 0:
+                self.immune = False
         if self.health <= 0:
             self.alive = False

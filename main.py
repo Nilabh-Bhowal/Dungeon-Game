@@ -39,8 +39,7 @@ class Player(entity.Entity):
 class Sword:
     def __init__(self, holder):
         self.holder = holder
-        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 32, 32)
-        self.range_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height)
+        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 64, 64)
         self.mode = "held"
         self.timer = 15
 
@@ -49,39 +48,28 @@ class Sword:
         self.update_mode()
 
         if self.holder.direction == "up":
-            self.rect.right = self.holder.rect.right
-            self.rect.top = self.holder.rect.top - self.rect.height + 16
+            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
         elif self.holder.direction == "down":
-            self.rect.left = self.holder.rect.left
-            self.rect.top = self.holder.rect.bottom - 16
+            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
         elif self.holder.direction == "left":
-            self.rect.top = self.holder.rect.top
-            self.rect.left = self.holder.rect.left - self.rect.width + 16
+            self.rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
         else:
-            self.rect.bottom = self.holder.rect.bottom
-            self.rect.left = self.holder.rect.right - 16
-
-        if self.holder.direction == "up":
-            self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "down":
-            self.range_rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "left":
-            self.range_rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-        else:
-            self.range_rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+            self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
 
         return self.mode == "attack"
 
     def update_mode(self):
+        print(self.mode)
         if self.mode != "held":
             self.timer -= 1
-            if 0 < self.timer <= 13:
+            if 0 < self.timer <= 10:
                 self.mode = "cooldown"
-            elif self.timer == 0:
+            elif self.timer <= 0:
                 self.mode = "held"
 
         else:
             self.timer = 15
+
 
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
@@ -145,6 +133,7 @@ def main_loop(level, state, screen, display):
     # scroll for camera
     true_scroll = [0, 0]
     scroll = [0, 0]
+    pressed = False
 
     # load level from file
     rooms, chests, enemies = load_level(level)
@@ -169,8 +158,12 @@ def main_loop(level, state, screen, display):
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
         player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
-        if key_pressed[pygame.K_SPACE] and player.sword.mode == "held":
-            player.sword.mode = "attack"
+        if key_pressed[pygame.K_SPACE]:
+            if player.sword.mode == "held" and not pressed:
+                player.sword.mode = "attack"
+                pressed = True
+        else:
+            pressed = False
 
         if key_pressed[pygame.K_LEFT]:
             player.direction = "left"
