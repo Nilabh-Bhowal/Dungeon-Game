@@ -1,5 +1,4 @@
 import pygame
-import math
 import time
 import sys
 
@@ -167,29 +166,20 @@ def main_loop(level, state, screen, display):
             if event.type == pygame.QUIT:
                 running = False
 
-            # check if key is pressed down, and sets the movement variable based on that
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    player.movement[0] = -1
-                    player.direction = "left"
-                if event.key == pygame.K_RIGHT:
-                    player.movement[0] = 1
-                    player.direction = "right"
-                if event.key == pygame.K_UP:
-                    player.movement[1] = -1
-                    player.direction = "up"
-                if event.key == pygame.K_DOWN:
-                    player.movement[1] = 1
-                    player.direction = "down"
-                if event.key == pygame.K_SPACE and player.sword.mode == "held":
-                    player.sword.mode = "attack"
+        key_pressed = pygame.key.get_pressed()
+        player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
+        player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
+        if key_pressed[pygame.K_SPACE] and player.sword.mode == "held":
+            player.sword.mode = "attack"
 
-            # check if key is released to set the movement variable based on that
-            if event.type == pygame.KEYUP:
-                if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
-                    player.movement[0] = 0
-                if event.key in [pygame.K_UP, pygame.K_DOWN]:
-                    player.movement[1] = 0
+        if key_pressed[pygame.K_LEFT]:
+            player.direction = "left"
+        if key_pressed[pygame.K_RIGHT]:
+            player.direction = "right"
+        if key_pressed[pygame.K_UP]:
+            player.direction = "up"
+        if key_pressed[pygame.K_DOWN]:
+            player.direction = "down"
 
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
