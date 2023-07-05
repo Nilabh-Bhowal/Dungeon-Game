@@ -19,6 +19,7 @@ activate
 # Distribution / packaging
 .Python
 build/
+builds/
 develop-eggs/
 dist/
 downloads/

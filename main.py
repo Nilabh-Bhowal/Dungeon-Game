@@ -8,15 +8,17 @@ import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
 
+# initialize pygame
 pygame.init()
 pygame.display.init()
 
 # create window
-WIDTH = 1280
-HEIGHT = 720
-display = pygame.display.set_mode((WIDTH, HEIGHT))
+display = pygame.display.set_mode((1280, 720))
+pygame.display.set_caption("Naisha farted")
+pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png"))
 screen = pygame.Surface((1280, 720))
 
+# set the state of the window
 state = "main menu"
 
 
@@ -47,6 +49,7 @@ class Sword:
 
         self.update_mode()
 
+        # put sword hitbox in right spot
         if self.holder.direction == "up":
             self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
         elif self.holder.direction == "down":
@@ -56,17 +59,17 @@ class Sword:
         else:
             self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
 
+        # allows the ability to check if holder attacked
         return self.mode == "attack"
 
     def update_mode(self):
-        print(self.mode)
+        # updates mode from held to attack to cooldown
         if self.mode != "held":
             self.timer -= 1
             if 0 < self.timer <= 10:
                 self.mode = "cooldown"
             elif self.timer <= 0:
                 self.mode = "held"
-
         else:
             self.timer = 15
 
@@ -93,31 +96,39 @@ def load_level(level):
             elif item[0] == 3:
                 enemies.append(enemy.Enemy(item[1], item[2], 64, 64, 3, 70, "player.png"))
 
+    # spits out list for level data
     return rooms, chests, enemies
 
-
+# quit function
 def quit():
     pygame.quit()
     sys.exit()
 
+# main menu function
 def main_menu(state, screen, display):
     play_button = ui.Button("Play", 640, 360, 500, 100)
     quit_button = ui.Button("Quit", 640, 510, 500, 100)
 
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
     clock = pygame.time.Clock()
+
     while state == "main menu":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 state = "quit"
 
         screen.fill((255, 100, 100))
-        ui.title("Goofy Ahh Dungeon Game ",  640, 200, screen)
+        ui.title("Naisha farted",  640, 200, screen)
         if play_button.draw(screen):
             state = "level 0"
         if quit_button.draw(screen):
             state = "quit"
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
@@ -129,11 +140,15 @@ def main_menu(state, screen, display):
         main_loop(0, state, screen, display)
 
 
-def main_loop(level, state, screen, display):
+def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     # scroll for camera
     true_scroll = [0, 0]
     scroll = [0, 0]
     pressed = False
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
 
     # load level from file
     rooms, chests, enemies = load_level(level)
@@ -147,18 +162,18 @@ def main_loop(level, state, screen, display):
     dt = 1/60
 
     # main loop
-    running = True
-    while running:
+    while state == f"level {level}":
 
         for event in pygame.event.get():
             # check if player quits
             if event.type == pygame.QUIT:
-                running = False
+                state = "quit"
 
+        # gets key inputs
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
         player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
-        if key_pressed[pygame.K_SPACE]:
+        if pygame.mouse.get_pressed()[0]:
             if player.sword.mode == "held" and not pressed:
                 player.sword.mode = "attack"
                 pressed = True
@@ -200,13 +215,19 @@ def main_loop(level, state, screen, display):
         for enemy in enemies:
             enemy.draw(screen, scroll)
 
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
         # updates display
-        display.blit(pygame.transform.scale(screen, (WIDTH, HEIGHT)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
         pygame.display.update()
 
+        # ensures everything is running smoothly
         clock.tick(60)
         now = time.time()
         dt = (now - pt) * 60
         pt = now
+
+    if state == "quit":
+        quit()
 
 main_menu(state, screen, display)
