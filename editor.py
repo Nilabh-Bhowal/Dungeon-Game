@@ -18,7 +18,7 @@ def save(num, level):
                 l = 1
             elif isinstance(item, dungeon.Chest):
                 l = 2
-            elif isinstance(item, enemy.Enemy):
+            elif isinstance(item, enemy.Zombie):
                 l = 3
             f.write(f"[{l}, {item.rect.x}, {item.rect.y}]\n")
 
@@ -36,7 +36,7 @@ def load(num):
             elif item[0] == 2:
                 level.append(dungeon.Chest(item[1], item[2]))
             elif item[0] == 3:
-                level.append(enemy.Enemy(item[1], item[2], 64, 64, 0, 4, "player.png"))
+                level.append(enemy.Zombie(item[1], item[2]))
 
     return level
 
@@ -64,7 +64,7 @@ level = 0
 pressed = False
 
 clock = pygame.time.Clock()
-buttons = [ui.Button("Room", 1000, 200, 200, 50), ui.Button("Corridor", 1000, 300, 200, 50), ui.Button("Chest", 1000, 400, 200, 50), ui.Button("Enemy", 1000, 500, 200, 50)]
+buttons = [ui.Button("Room", 1130, 200, 200, 50), ui.Button("Corridor", 1130, 300, 200, 50), ui.Button("Chest", 1130, 400, 200, 50), ui.Button("Zombie", 1130, 500, 200, 50)]
 
 running = True
 while running:
@@ -138,8 +138,8 @@ while running:
         elif current_item == "Chest":
             rooms.append(dungeon.Chest(round((pygame.mouse.get_pos()[
                          0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
-        elif current_item == "Enemy":
-            rooms.append(enemy.Enemy(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32, 64, 64, 0, 4, "player.png"))
+        elif current_item == "Zombie":
+            rooms.append(enemy.Zombie(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
     if not pygame.mouse.get_pressed()[0]:
         pressed = False
 

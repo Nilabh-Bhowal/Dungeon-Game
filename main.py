@@ -4,6 +4,7 @@ import sys
 
 # import other files in project
 import assets.scripts.ui as ui
+import assets.scripts.inventory as inventory
 import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
@@ -15,7 +16,7 @@ pygame.display.init()
 
 # create window
 display = pygame.display.set_mode((1280, 720))
-pygame.display.set_caption("Naisha farted")
+pygame.display.set_caption("Goofy Ahh Dungeon Game")
 pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png"))
 screen = pygame.Surface((1280, 720))
 
@@ -30,9 +31,14 @@ class Player(entity.Entity):
         self.state = "active"
         self.sword = weapon.Sword(self, 30)
         self.attack = False
+        self.inventory = inventory.Inventory(640, 600)
+        self.inventory.hotbar[self.inventory.active_slot] = "sword"
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
+        self.sword.displayed = (
+            self.inventory.hotbar[self.inventory.active_slot] == "sword"
+        )
         self.check_damaged(enemies)
         self.attack = self.sword.update(dt)
 
@@ -79,6 +85,9 @@ def load_level(level):
     # spits out list for level data
     return rooms, chests, enemies
 
+def open_inventory():
+    pass
+
 # quit function
 def quit():
     pygame.quit()
@@ -101,7 +110,7 @@ def main_menu(state, screen, display):
                 state = "quit"
 
         screen.fill((255, 100, 100))
-        ui.title("Naisha farted",  640, 200, screen)
+        ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
         if play_button.draw(screen):
             state = "level 0"
         if quit_button.draw(screen):
@@ -169,6 +178,28 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         if key_pressed[pygame.K_DOWN]:
             player.direction = "down"
 
+        if key_pressed[pygame.K_1]:
+            player.inventory.active_slot = 0
+        elif key_pressed[pygame.K_2]:
+            player.inventory.active_slot = 1
+        elif key_pressed[pygame.K_3]:
+            player.inventory.active_slot = 2
+        elif key_pressed[pygame.K_4]:
+            player.inventory.active_slot = 3
+        elif key_pressed[pygame.K_5]:
+            player.inventory.active_slot = 4
+        elif key_pressed[pygame.K_6]:
+            player.inventory.active_slot = 5
+        elif key_pressed[pygame.K_7]:
+            player.inventory.active_slot = 6
+        elif key_pressed[pygame.K_8]:
+            player.inventory.active_slot = 7
+        elif key_pressed[pygame.K_9]:
+            player.inventory.active_slot = 8
+
+        if key_pressed[pygame.K_e]:
+            open_inventory()
+
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
                         - true_scroll[0]) / 25 * dt
@@ -194,6 +225,8 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
+
+        player.inventory.draw(screen)
 
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
 

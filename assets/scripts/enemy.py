@@ -19,12 +19,14 @@ class Enemy(entity.Entity):
         super().move(dt, rooms)
         self.check_damaged(player)
 
-        if self.state == "attack":
+        if self.state == "target":
             self.target_player(player)
+        else:
+            self.movement = [0, 0]
 
 
-        if math.hypot(self.rect.centerx - player.rect.centerx, self.rect.centery - player.rect.centery) < self.range and self.state != "stunned":
-            self.state = "attack"
+        if math.hypot(self.rect.centerx - player.rect.centerx, self.rect.centery - player.rect.centery) < self.range and self.state not in ["stunned", "attack"]:
+            self.state = "target"
 
         self.direction = "right" if self.movement[0] > 0 else "left"
 
@@ -60,16 +62,19 @@ class Zombie(Enemy):
         self.attack = False
 
     def move(self, player, dt, rooms):
+        if self.weapon.rect.colliderect(player.rect):
+            self.state = "attack"
+            self.strike()
+        else:
+            self.state = "idle"
         super().move(player, dt, rooms)
         self.attack = self.weapon.update(dt)
-        if self.weapon.rect.colliderect(player.rect):
-            self.strike()
-            print("e")
 
     def strike(self):
-        if self.weapon.mode == "held":
+        if self.weapon.mode == "held" and random.randint(0, 15) == 15:
+            print("e")
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll):
-        super().draw(screen, scroll)
         self.weapon.draw(screen, scroll)
+        super().draw(screen, scroll)
