@@ -24,13 +24,13 @@ class Enemy(entity.Entity):
 
             self.movement = [0, 0]
             if self.knockback_direction == "left":
-                self.rect.x -= 10
+                self.rect.x -= self.immune_timer
             elif self.knockback_direction == "right":
-                self.rect.x += 10
+                self.rect.x += self.immune_timer
             elif self.knockback_direction == "up":
-                self.rect.y -= 10
+                self.rect.y -= self.immune_timer
             else:
-                self.rect.y += 10
+                self.rect.y += self.immune_timer
 
         if math.hypot(self.rect.centerx - player.rect.centerx, self.rect.centery - player.rect.centery) < self.range and self.state != "stunned":
             self.state = "attack"

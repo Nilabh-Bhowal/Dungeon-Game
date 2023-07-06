@@ -6,20 +6,21 @@ import pygame
 class DungeonRoom:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 1024, 1024)
-        self.image = pygame.transform.scale2x(pygame.image.load("assets/images/rooms/room.png"))
-        self.image.set_colorkey((255, 255, 255))
+        self.color = (50, 0, 205)
 
     def draw(self, screen, scroll):
-        screen.blit(self.image, (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+        pygame.draw.rect(screen, self.color,
+                         (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 class Corridor:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 256, 128)
-        self.image = pygame.transform.scale2x(pygame.image.load("assets/images/rooms/corridor.png"))
+        self.color = (50, 0, 205)
 
     def draw(self, screen, scroll):
-        screen.blit(self.image, (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+        pygame.draw.rect(screen, self.color,
+                         (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 class Chest:
@@ -31,7 +32,7 @@ class Chest:
         pass
 
     def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color, pygame.Rect(self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 def can_pass(entity, current_room, rooms):

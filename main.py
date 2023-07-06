@@ -173,7 +173,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
         player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
-        if pygame.mouse.get_pressed()[0]:
+        if key_pressed[pygame.K_SPACE]:
             if player.sword.mode == "held" and not pressed:
                 player.sword.mode = "attack"
                 pressed = True
