@@ -3,6 +3,7 @@ import math
 import random
 
 import assets.scripts.entity as entity
+import assets.scripts.weapon as weapon
 
 class Enemy(entity.Entity):
     def __init__(self, x, y, width, height, speed, health, img):
@@ -20,17 +21,7 @@ class Enemy(entity.Entity):
 
         if self.state == "attack":
             self.target_player(player)
-        if self.state == "stunned":
 
-            self.movement = [0, 0]
-            if self.knockback_direction == "left":
-                self.rect.x -= self.immune_timer
-            elif self.knockback_direction == "right":
-                self.rect.x += self.immune_timer
-            elif self.knockback_direction == "up":
-                self.rect.y -= self.immune_timer
-            else:
-                self.rect.y += self.immune_timer
 
         if math.hypot(self.rect.centerx - player.rect.centerx, self.rect.centery - player.rect.centery) < self.range and self.state != "stunned":
             self.state = "attack"
@@ -60,3 +51,25 @@ class Enemy(entity.Entity):
 
         if self.health <= 0:
             self.alive = False
+
+
+class Zombie(Enemy):
+    def __init__(self, x, y):
+        super().__init__(x, y, 64, 64, 4, 70, "player.png")
+        self.weapon = weapon.Sword(self, 10)
+        self.attack = False
+
+    def move(self, player, dt, rooms):
+        super().move(player, dt, rooms)
+        self.attack = self.weapon.update(dt)
+        if self.weapon.rect.colliderect(player.rect):
+            self.strike()
+            print("e")
+
+    def strike(self):
+        if self.weapon.mode == "held":
+            self.weapon.mode = "attack"
+
+    def draw(self, screen, scroll):
+        super().draw(screen, scroll)
+        self.weapon.draw(screen, scroll)

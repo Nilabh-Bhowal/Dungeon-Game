@@ -7,6 +7,7 @@ import assets.scripts.ui as ui
 import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
+import assets.scripts.weapon as weapon
 
 # initialize pygame
 pygame.init()
@@ -26,56 +27,35 @@ state = "main menu"
 class Player(entity.Entity):
     def __init__(self):
         super().__init__(304, 164, 64, 64, 10, 100, "player.png")
-        self.sword = Sword(self)
+        self.state = "active"
+        self.sword = weapon.Sword(self, 30)
         self.attack = False
 
-    def move(self, dt, rooms):
+    def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
-        self.attack = self.sword.update()
+        self.check_damaged(enemies)
+        self.attack = self.sword.update(dt)
+
+    def check_damaged(self, enemies):
+        if self.immune:
+            self.immune_timer -= 1
+        if self.immune_timer <= 0 and self.immune:
+            self.immune = False
+            self.state = "active"
+        for enemy in enemies:
+            if self.rect.colliderect(enemy.weapon.rect) and enemy.attack and not self.immune:
+                self.health -= enemy.weapon.damage
+                self.state = "stunned"
+                self.knockback_direction = enemy.direction
+                self.immune = True
+                self.immune_timer = 15
+
+        if self.health <= 0:
+            self.alive = False
 
     def draw(self, screen, scroll):
         super().draw(screen, scroll)
         self.sword.draw(screen, scroll)
-
-
-class Sword:
-    def __init__(self, holder):
-        self.holder = holder
-        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 64, 64)
-        self.mode = "held"
-        self.timer = 15
-
-    def update(self):
-
-        self.update_mode()
-
-        # put sword hitbox in right spot
-        if self.holder.direction == "up":
-            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "down":
-            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "left":
-            self.rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-        else:
-            self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-
-        # allows the ability to check if holder attacked
-        return self.mode == "attack"
-
-    def update_mode(self):
-        # updates mode from held to attack to cooldown
-        if self.mode != "held":
-            self.timer -= 1
-            if 0 < self.timer <= 10:
-                self.mode = "cooldown"
-            elif self.timer <= 0:
-                self.mode = "held"
-        else:
-            self.timer = 15
-
-
-    def draw(self, screen, scroll):
-        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 # allows to load levels from file
@@ -94,7 +74,7 @@ def load_level(level):
             elif item[0] == 2:
                 chests.append(dungeon.Chest(item[1], item[2]))
             elif item[0] == 3:
-                enemies.append(enemy.Enemy(item[1], item[2], 64, 64, 3, 70, "player.png"))
+                enemies.append(enemy.Zombie(item[1], item[2]))
 
     # spits out list for level data
     return rooms, chests, enemies
@@ -199,7 +179,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         scroll[1] = int(scroll[1])
 
         # moves objects
-        player.move(dt, rooms)
+        player.move(dt, rooms, enemies)
         for enemy in enemies:
             enemy.move(player, dt, rooms)
             if not enemy.alive:
