@@ -21,7 +21,7 @@ class Enemy(entity.Entity):
 
         if self.state == "target":
             self.target_player(player)
-        else:
+        elif self.state == "stunned":
             self.movement = [0, 0]
 
 
@@ -44,7 +44,7 @@ class Enemy(entity.Entity):
             self.immune = False
             self.state = "idle"
 
-        if self.rect.colliderect(player.sword.rect) and player.attack and not self.immune:
+        if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
             self.health -= random.randint(20, 40)
             self.state = "stunned"
             self.knockback_direction = player.direction
@@ -63,16 +63,13 @@ class Zombie(Enemy):
 
     def move(self, player, dt, rooms):
         if self.weapon.rect.colliderect(player.rect):
-            self.state = "attack"
             self.strike()
-        else:
-            self.state = "idle"
+
         super().move(player, dt, rooms)
         self.attack = self.weapon.update(dt)
 
     def strike(self):
         if self.weapon.mode == "held" and random.randint(0, 15) == 15:
-            print("e")
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll):

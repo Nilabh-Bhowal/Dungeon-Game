@@ -12,6 +12,7 @@ pyvenv.cfg
 
 .history/
 .vscode/
+test.py
 activate
 *.bat
 *.ps1

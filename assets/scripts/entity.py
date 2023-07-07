@@ -32,14 +32,10 @@ class Entity:
 
     def draw(self, screen, scroll):
         if self.direction == "left":
-            screen.blit(pygame.transform.rotate(self.img, -90),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.rotate(self.img, -90), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
         elif self.direction == "right":
-            screen.blit(pygame.transform.rotate(self.img, 90),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.rotate(self.img, 90), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
         elif self.direction == "up":
-            screen.blit(pygame.transform.rotate(self.img, 180),
-                        (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.rotate(self.img, 180), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
         else:
-            screen.blit(self.img, (self.rect.x -
-                        scroll[0], self.rect.y - scroll[1]))
+            screen.blit(self.img, (self.rect.x - scroll[0], self.rect.y - scroll[1]))

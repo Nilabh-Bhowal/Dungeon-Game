@@ -3,29 +3,26 @@ import pygame
 class Sword:
     def __init__(self, holder, damage):
         self.holder = holder
-        self.displayed = True
         self.damage = damage
         self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 64, 64)
         self.mode = "held"
         self.timer = 15
 
     def update(self, dt):
+        self.update_mode(dt)
 
-        if self.displayed:
-            self.update_mode(dt)
-
-            # put sword hitbox in right spot
-            if self.holder.direction == "up":
-                self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
-            elif self.holder.direction == "down":
-                self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
-            elif self.holder.direction == "left":
-                self.rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-            else:
-                self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+        # put sword hitbox in right spot
+        if self.holder.direction == "up":
+            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
+        elif self.holder.direction == "down":
+            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
+        elif self.holder.direction == "left":
+            self.rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+        else:
+            self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
 
         # allows the ability to check if holder attacked
-        return self.mode == "attack" and self.displayed
+        return self.mode == "attack"
 
     def update_mode(self, dt):
         # updates mode from held to attack to cooldown
@@ -40,5 +37,4 @@ class Sword:
 
 
     def draw(self, screen, scroll):
-        if self.displayed:
-            pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))

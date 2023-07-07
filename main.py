@@ -29,18 +29,19 @@ class Player(entity.Entity):
     def __init__(self):
         super().__init__(304, 164, 64, 64, 10, 100, "player.png")
         self.state = "active"
-        self.sword = weapon.Sword(self, 30)
         self.attack = False
         self.inventory = inventory.Inventory(640, 600)
-        self.inventory.hotbar[self.inventory.active_slot] = "sword"
+        self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30)
+        self.active_item = self.inventory.hotbar[self.inventory.active_slot]
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
-        self.sword.displayed = (
-            self.inventory.hotbar[self.inventory.active_slot] == "sword"
-        )
+        self.active_item = self.inventory.hotbar[self.inventory.active_slot]
+        if self.health < 100:
+            self.health += 0.01
         self.check_damaged(enemies)
-        self.attack = self.sword.update(dt)
+        if isinstance(self.active_item, weapon.Sword):
+            self.attack = self.active_item.update(dt)
 
     def check_damaged(self, enemies):
         if self.immune:
@@ -61,7 +62,8 @@ class Player(entity.Entity):
 
     def draw(self, screen, scroll):
         super().draw(screen, scroll)
-        self.sword.draw(screen, scroll)
+        if self.active_item != "empty":
+            self.active_item.draw(screen, scroll)
 
 
 # allows to load levels from file
@@ -85,8 +87,6 @@ def load_level(level):
     # spits out list for level data
     return rooms, chests, enemies
 
-def open_inventory():
-    pass
 
 # quit function
 def quit():
@@ -129,6 +129,31 @@ def main_menu(state, screen, display):
         main_loop(0, state, screen, display)
 
 
+def open_inventory(screen, display, inventory):
+    inventory_open = True
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+
+    clock = pygame.time.Clock()
+    while inventory_open:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                inventory_open = False
+
+        screen.fill((255, 100, 100))
+        inventory.draw(screen)
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+
 def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     # scroll for camera
     true_scroll = [0, 0]
@@ -158,13 +183,17 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             if event.type == pygame.QUIT:
                 state = "quit"
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                open_inventory(screen, display, player.inventory)
+                scroll = scroll
+
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
         player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
         if key_pressed[pygame.K_SPACE]:
-            if player.sword.mode == "held" and not pressed:
-                player.sword.mode = "attack"
+            if player.active_item.mode == "held" and not pressed and isinstance(player.active_item, weapon.Sword):
+                player.active_item.mode = "attack"
                 pressed = True
         else:
             pressed = False
@@ -197,9 +226,6 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         elif key_pressed[pygame.K_9]:
             player.inventory.active_slot = 8
 
-        if key_pressed[pygame.K_e]:
-            open_inventory()
-
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
                         - true_scroll[0]) / 25 * dt
@@ -221,12 +247,15 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         for room in rooms:
             room.draw(screen, scroll)
         for chest in chests:
+            chest.generate_loot(player)
             chest.draw(screen, scroll)
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
 
-        player.inventory.draw(screen)
+        player.inventory.draw_hotbar(screen)
+        pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
+        pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
 
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
 

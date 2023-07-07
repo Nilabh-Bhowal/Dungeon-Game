@@ -25,18 +25,23 @@ class Corridor:
 
 class Chest:
     def __init__(self, x, y):
+        self.dropped_items = []
+        self.empty = False
         self.rect = pygame.Rect(x, y, 128, 64)
         self.color = (255, 175, 112)
 
-    def generate_loot():
-        pass
+    def generate_loot(self, player):
+        if self.rect.colliderect(player.rect) and not self.empty:
+            self.dropped_items.append(["sword", pygame.Rect(self.rect.centerx + random.randint(-32, 32), self.rect.centery + random.randint(-64, 64), 32, 32)])
+            self.empty = True
 
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        for item in self.dropped_items:
+            pygame.draw.rect(screen, (255, 255, 255), (item[1].x - scroll[0], item[1].y - scroll[1], item[1].width, item[1].height))
 
 
 def can_pass(entity, current_room, rooms):
-    # sourcery skip: instance-method-first-arg-name
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:
         if room != current_room:
