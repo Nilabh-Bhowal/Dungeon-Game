@@ -185,7 +185,8 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
                 open_inventory(screen, display, player.inventory)
-                scroll = scroll
+                pt = time.time()
+
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
@@ -227,13 +228,6 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             player.inventory.active_slot = 8
 
         # sets the scroll value
-        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
-                        - true_scroll[0]) / 25 * dt
-        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
-                        - true_scroll[1]) / 25 * dt
-        scroll = true_scroll.copy()
-        scroll[0] = int(scroll[0])
-        scroll[1] = int(scroll[1])
 
         # moves objects
         player.move(dt, rooms, enemies)
@@ -241,6 +235,14 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             enemy.move(player, dt, rooms)
             if not enemy.alive:
                 enemies.remove(enemy)
+
+        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
+                        - true_scroll[0]) / 25 * dt
+        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
+                        - true_scroll[1]) / 25 * dt
+        scroll = true_scroll.copy()
+        scroll[0] = int(scroll[0])
+        scroll[1] = int(scroll[1])
 
         # draws to the screen
         screen.fill((255, 100, 100))
@@ -253,10 +255,11 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         for enemy in enemies:
             enemy.draw(screen, scroll)
 
+
         player.inventory.draw_hotbar(screen)
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
-        pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
 
+        pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
 
         # updates display
@@ -268,6 +271,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         now = time.time()
         dt = (now - pt) * 60
         pt = now
+
 
     if state == "quit":
         quit()
