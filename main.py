@@ -23,11 +23,10 @@ screen = pygame.Surface((1280, 720))
 # set the state of the window
 state = "main menu"
 
-
 # player class
 class Player(entity.Entity):
     def __init__(self):
-        super().__init__(304, 164, 64, 64, 10, 100, "player.png")
+        super().__init__(0, 0, 64, 64, 10, 100, "player.png")
         self.state = "active"
         self.attack = False
         self.inventory = inventory.Inventory(640, 600)
@@ -129,6 +128,95 @@ def main_menu(state, screen, display):
         main_loop(0, state, screen, display)
 
 
+def game_over(state, screen, display, level):
+    play_button = ui.Button("Restart", 640, 360, 400, 75)
+    main_menu_button = ui.Button("Main Menu", 640, 460, 400, 75)
+    quit_button = ui.Button("Quit", 640, 560, 400, 75)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+    clicked = True
+
+    while state == "game over":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                state = "quit"
+
+        screen.fill((255, 100, 100))
+        ui.title("You Ded",  640, 200, screen)
+        if play_button.draw(screen):
+            state = f"level {level}"
+        if main_menu_button.draw(screen):
+            state = "main menu"
+        if quit_button.draw(screen):
+            state = "quit"
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if state == "quit":
+        quit()
+    elif state == f"level {level}":
+        main_loop(level, state, screen, display)
+    elif state == "main menu":
+        main_menu(state, screen, display)
+
+
+def paused(state, screen, display, level):
+    play_button = ui.Button("Continue", 640, 360, 400, 75)
+    restart_button = ui.Button("Restart", 640, 460, 400, 75)
+    main_menu_button = ui.Button("Main Menu", 640, 560, 400, 75)
+    quit_button = ui.Button("Quit", 640, 660, 400, 75)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    pause = True
+    restart = False
+    while pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                state = "quit"
+                pause = False
+
+        screen.fill((255, 100, 100))
+        ui.title("Paused",  640, 200, screen)
+        if play_button.draw(screen):
+            pause = False
+        if restart_button.draw(screen):
+            state = f"level {level}"
+            pause = False
+            restart = True
+        if main_menu_button.draw(screen):
+            state = "main menu"
+            pause = False
+        if quit_button.draw(screen):
+            state = "quit"
+            pause = False
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if state == "quit":
+        quit()
+    elif state == f"level {level}" and restart:
+        main_loop(level, state, screen, display)
+    elif state == "main menu":
+        main_menu(state, screen, display)
+
+
 def open_inventory(screen, display, inventory):
     inventory_open = True
 
@@ -156,8 +244,6 @@ def open_inventory(screen, display, inventory):
 
 def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     # scroll for camera
-    true_scroll = [0, 0]
-    scroll = [0, 0]
     pressed = False
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -169,6 +255,9 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
     # initialize objects
     player = Player()
+
+    true_scroll = [-player.rect.x, -player.rect.y]
+    scroll = [0, 0]
 
     # controls fps
     clock = pygame.time.Clock()
@@ -183,9 +272,13 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             if event.type == pygame.QUIT:
                 state = "quit"
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
-                open_inventory(screen, display, player.inventory)
-                pt = time.time()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    open_inventory(screen, display, player.inventory)
+                    pt = time.time()
+                elif event.key == pygame.K_p:
+                    paused(state, screen, display, level)
+                    pt = time.time()
 
 
         # gets key inputs
@@ -228,6 +321,13 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             player.inventory.active_slot = 8
 
         # sets the scroll value
+        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
+                        - true_scroll[0]) / 25 * dt
+        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
+                        - true_scroll[1]) / 25 * dt
+        scroll = true_scroll.copy()
+        scroll[0] = int(scroll[0])
+        scroll[1] = int(scroll[1])
 
         # moves objects
         player.move(dt, rooms, enemies)
@@ -236,13 +336,9 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
             if not enemy.alive:
                 enemies.remove(enemy)
 
-        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
-                        - true_scroll[0]) / 25 * dt
-        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
-                        - true_scroll[1]) / 25 * dt
-        scroll = true_scroll.copy()
-        scroll[0] = int(scroll[0])
-        scroll[1] = int(scroll[1])
+        if player.health <= 0:
+            state = "game over"
+
 
         # draws to the screen
         screen.fill((255, 100, 100))
@@ -275,5 +371,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
     if state == "quit":
         quit()
+    elif state == "game over":
+         game_over(state, screen, display, level)
 
 main_menu(state, screen, display)

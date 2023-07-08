@@ -41,26 +41,47 @@ class Chest:
             pygame.draw.rect(screen, (255, 255, 255), (item[1].x - scroll[0], item[1].y - scroll[1], item[1].width, item[1].height))
 
 
-def can_pass(entity, current_room, rooms):
+class End:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 128, 128)
+        self.color = (255, 255, 0)
+
+    def draw(self, screen, scroll):
+        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+
+
+def can_pass(self, current_room, rooms):
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:
         if room != current_room:
-            pu = pu or entity.rect.top - entity.rect.height < room.rect.bottom \
-                and entity.rect.top > room.rect.top \
-                and entity.rect.left >= room.rect.left \
-                and entity.rect.right <= room.rect.right
-            pd = pd or entity.rect.bottom + entity.rect.height > room.rect.top \
-                and entity.rect.bottom < room.rect.bottom\
-                and entity.rect.left >= room.rect.left \
-                and entity.rect.right <= room.rect.right
-            pl = pl or entity.rect.left - entity.rect.width < room.rect.right \
-                and entity.rect.left > room.rect.left \
-                and entity.rect.top >= room.rect.top \
-                and entity.rect.bottom <= room.rect.bottom
-            pr = pr or entity.rect.right + entity.rect.width > room.rect.left \
-                and entity.rect.right < room.rect.right \
-                and entity.rect.top >= room.rect.top \
-                and entity.rect.bottom <= room.rect.bottom
+            pu = (
+                pu
+                or self.rect.top - self.rect.height < room.rect.bottom
+                and self.rect.top > room.rect.top
+                and self.rect.left >= room.rect.left
+                and self.rect.right <= room.rect.right
+            )
+            pd = (
+                pd
+                or self.rect.bottom + self.rect.height > room.rect.top
+                and self.rect.bottom < room.rect.bottom
+                and self.rect.left >= room.rect.left
+                and self.rect.right <= room.rect.right
+            )
+            pl = (
+                pl
+                or self.rect.left - self.rect.width < room.rect.right
+                and self.rect.left > room.rect.left
+                and self.rect.top >= room.rect.top
+                and self.rect.bottom <= room.rect.bottom
+            )
+            pr = (
+                pr
+                or self.rect.right + self.rect.width > room.rect.left
+                and self.rect.right < room.rect.right
+                and self.rect.top >= room.rect.top
+                and self.rect.bottom <= room.rect.bottom
+            )
     return pu, pd, pl, pr
 
 

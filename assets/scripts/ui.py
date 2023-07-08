@@ -15,17 +15,24 @@ class Button:
         self.rect = pygame.Rect(0, 0, width, height)
         self.rect.centerx = x
         self.rect.centery = y
+        self.clicked = True
 
     def draw(self, screen):
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pressed = pygame.mouse.get_pressed()[0]
 
-        if self.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
-            return (
-                self.normal_draw(True, screen)
-                if pygame.mouse.get_pressed()[0]
-                else self.hover_draw(screen)
-            )
+        if self.rect.collidepoint(mouse_pos):
+            if mouse_pressed:
+                if not self.clicked:
+                    return self.normal_draw(True, screen)
+                self.clicked = True
+            else:
+                self.clicked = False
+            return self.hover_draw(screen)
         else:
+            self.clicked = bool(mouse_pressed)
             return self.normal_draw(False, screen)
+
 
     def hover_draw(self, screen):
         pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - 15,
