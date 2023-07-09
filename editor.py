@@ -105,33 +105,43 @@ while running:
             if event.key == pygame.K_0:
                 level = 0
                 rooms = []
+                items = []
             elif event.key == pygame.K_1:
                 level = 1
                 rooms = []
+                items = []
             elif event.key == pygame.K_2:
                 level = 2
                 rooms = []
+                items = []
             elif event.key == pygame.K_3:
                 level = 3
                 rooms = []
+                items = []
             elif event.key == pygame.K_4:
                 level = 4
                 rooms = []
+                items = []
             elif event.key == pygame.K_5:
                 level = 5
                 rooms = []
+                items = []
             elif event.key == pygame.K_6:
                 level = 6
                 rooms = []
+                items = []
             elif event.key == pygame.K_7:
                 level = 7
                 rooms = []
+                items = []
             elif event.key == pygame.K_8:
                 level = 8
                 rooms = []
+                items = []
             elif event.key == pygame.K_9:
                 level = 9
                 rooms = []
+                items = []
 
         if event.type == pygame.KEYUP:
             if event.key in [pygame.K_RIGHT, pygame.K_LEFT]:
@@ -200,14 +210,14 @@ while running:
     scroll[1] += cam_movement[1] * 20
 
     screen.fill((255, 100, 100))
-    if isinstance(s, pygame.surface.Surface):
-        width = s.get_rect().width
-        height = s.get_rect().height
-        screen.blit(s, (round((pygame.mouse.get_pos()[0] - (width / 2)) / 32) * 32 - scroll[0] % 32, round((pygame.mouse.get_pos()[1] - (height / 2)) / 32) * 32 - scroll[1] % 32))
     for room in rooms:
         room.draw(screen, scroll)
     for item in items:
         item.draw(screen, scroll)
+    if isinstance(s, pygame.surface.Surface):
+        width = s.get_rect().width
+        height = s.get_rect().height
+        screen.blit(s, (round((pygame.mouse.get_pos()[0] - (width / 2)) / 32) * 32 - scroll[0] % 32, round((pygame.mouse.get_pos()[1] - (height / 2)) / 32) * 32 - scroll[1] % 32))
     pygame.draw.rect(screen, (0, 0, 0),
                      (320 - scroll[0], 180 - scroll[1], 32, 32))
     for i in range(34):

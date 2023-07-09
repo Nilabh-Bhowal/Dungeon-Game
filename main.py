@@ -1,3 +1,4 @@
+import random
 import pygame
 import time
 import sys
@@ -9,6 +10,7 @@ import assets.scripts.dungeon as dungeon
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
 import assets.scripts.weapon as weapon
+import assets.scripts.particle as particle
 
 # initialize pygame
 pygame.init()
@@ -136,7 +138,7 @@ def main_menu(state, screen, display):
         screen.fill((255, 100, 100))
         ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
         if play_button.draw(screen):
-            state = "level 0"
+            state = "level 1"
         if quit_button.draw(screen):
             state = "quit"
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -149,8 +151,8 @@ def main_menu(state, screen, display):
     if state == "quit":
         quit()
 
-    elif state == "level 0":
-        main_loop(0, state, screen, display)
+    elif state == "level 1":
+        main_loop(1, state, screen, display)
 
 
 def game_over(state, screen, display, level):
@@ -208,7 +210,7 @@ def win(state, screen, display, level):
                 state = "quit"
 
         screen.fill((255, 100, 100))
-        ui.title("Brr its cold down here",  640, 200, screen)
+        ui.title("levil complet",  640, 200, screen)
         if main_menu_button.draw(screen):
             state = "main menu"
         if quit_button.draw(screen):
@@ -310,6 +312,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
     # load level from file
     rooms, chests, enemies, end = load_level(level)
+    particles = []
 
     # initialize objects
     player = Player()
@@ -352,15 +355,23 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
         if key_pressed[pygame.K_LEFT]:
             player.direction = "left"
-        if key_pressed[pygame.K_RIGHT]:
+            for _ in range(5):
+                particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-32, 32), (220, 220, 220), 7, 1, random.uniform(-0.7, 0.7), 0.1, 1))
+        elif key_pressed[pygame.K_RIGHT]:
             player.direction = "right"
-        if key_pressed[pygame.K_UP]:
+            for _ in range(5):
+                particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-32, 32), (220, 220, 220), 7, -1, random.uniform(-0.7, 0.7), 0.1, 1))
+        elif key_pressed[pygame.K_UP]:
             player.direction = "up"
-        if key_pressed[pygame.K_DOWN]:
+            for _ in range(5):
+                particles.append(particle.Particle(player.rect.centerx + random.randint(-32, 32), player.rect.bottom, (220, 220, 220), 7, random.uniform(-0.7, 0.7), 1, 0.1, 1))
+        elif key_pressed[pygame.K_DOWN]:
             player.direction = "down"
+            for _ in range(5):
+                particles.append(particle.Particle(player.rect.centerx + random.randint(-32, 32), player.rect.top, (220, 220, 220), 7, random.uniform(-0.7, 0.7), -1, 0.1, 1))
 
         player.pickup = bool(key_pressed[pygame.K_q])
-        
+
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
         elif key_pressed[pygame.K_2]:
@@ -391,6 +402,10 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
         # moves objects
         player.move(dt, rooms, enemies)
+        for p in particles:
+            p.update(dt)
+            if p.size <= 0:
+                particles.remove(p)
         for enemy in enemies:
             enemy.move(player, dt, rooms)
             if not enemy.alive:
@@ -413,6 +428,9 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
+
+        for p in particles:
+            p.draw(screen, scroll)
 
 
         player.inventory.draw_hotbar(screen)

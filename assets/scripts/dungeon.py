@@ -57,6 +57,16 @@ class End(Room):
         super().__init__(x, y, 128, 128, (255, 255, 0))
 
 
+class LevelEnter(Room):
+    def __init__(self, x, y, level):
+        super().__init__(x, y, 256, 128, (255, 100, 0))
+        self.level = level
+
+    def check_collision(self, player):
+        if player.rect.colliderect(self.rect):
+            return self.level
+
+
 def can_pass(entity, current_room, rooms):
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:
