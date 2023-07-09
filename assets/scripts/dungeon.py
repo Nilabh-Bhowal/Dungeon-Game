@@ -3,84 +3,91 @@ import random
 import pygame
 
 
-class DungeonRoom:
-    def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 1024, 1024)
-        self.color = (50, 0, 205)
-
-    def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color,
-                         (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
-
-
-class Corridor:
-    def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 256, 128)
-        self.color = (50, 0, 205)
-
-    def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color,
-                         (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
-
-
-class Chest:
-    def __init__(self, x, y):
-        self.dropped_items = []
-        self.empty = False
-        self.rect = pygame.Rect(x, y, 128, 64)
-        self.color = (255, 175, 112)
-
-    def generate_loot(self, player):
-        if self.rect.colliderect(player.rect) and not self.empty:
-            self.dropped_items.append(["sword", pygame.Rect(self.rect.centerx + random.randint(-32, 32), self.rect.centery + random.randint(-64, 64), 32, 32)])
-            self.empty = True
+class Room:
+    def __init__(self, x, y, width, height, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.color = color
 
     def draw(self, screen, scroll):
         pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+
+
+class DungeonRoom(Room):
+    def __init__(self, x, y):
+        super().__init__(x, y, 1024, 1024, (50, 0, 205))
+
+
+class Corridor(Room):
+    def __init__(self, x, y):
+        super().__init__(x, y, 256, 128, (50, 0, 205))
+
+
+class Chest(Room):
+    def __init__(self, x, y):
+        super().__init__(x, y, 128, 64, (255, 175, 112))
+        self.dropped_items = []
+        self.empty = False
+
+    def generate_loot(self, player):
+        if self.rect.colliderect(player.rect) and not self.empty:
+            for _ in range(13):
+                self.dropped_items.append(["sword", pygame.Rect(self.rect.centerx + random.randint(-64, 64), self.rect.centery + random.randint(-32, 32), 32, 32)])
+            self.empty = True
+
+        self.player_pickup(player)
+
+    def player_pickup(self, player):
+        for item in self.dropped_items:
+            if player.pickup and item[1].colliderect(player.rect):
+                player.item_picked_up = item[0]
+                self.dropped_items.remove(item)
+            else:
+                player.item_picked_up = "empty"
+            if player.item_picked_up != "empty":
+                break
+
+    def draw(self, screen, scroll):
+        super().draw(screen, scroll)
         for item in self.dropped_items:
             pygame.draw.rect(screen, (255, 255, 255), (item[1].x - scroll[0], item[1].y - scroll[1], item[1].width, item[1].height))
 
 
-class End:
+class End(Room):
     def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 128, 128)
-        self.color = (255, 255, 0)
-
-    def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        super().__init__(x, y, 128, 128, (255, 255, 0))
 
 
-def can_pass(self, current_room, rooms):
+def can_pass(entity, current_room, rooms):
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:
         if room != current_room:
             pu = (
                 pu
-                or self.rect.top - self.rect.height < room.rect.bottom
-                and self.rect.top > room.rect.top
-                and self.rect.left >= room.rect.left
-                and self.rect.right <= room.rect.right
+                or entity.rect.top - entity.rect.height < room.rect.bottom
+                and entity.rect.top > room.rect.top
+                and entity.rect.left >= room.rect.left
+                and entity.rect.right <= room.rect.right
             )
             pd = (
                 pd
-                or self.rect.bottom + self.rect.height > room.rect.top
-                and self.rect.bottom < room.rect.bottom
-                and self.rect.left >= room.rect.left
-                and self.rect.right <= room.rect.right
+                or entity.rect.bottom + entity.rect.height > room.rect.top
+                and entity.rect.bottom < room.rect.bottom
+                and entity.rect.left >= room.rect.left
+                and entity.rect.right <= room.rect.right
             )
             pl = (
                 pl
-                or self.rect.left - self.rect.width < room.rect.right
-                and self.rect.left > room.rect.left
-                and self.rect.top >= room.rect.top
-                and self.rect.bottom <= room.rect.bottom
+                or entity.rect.left - entity.rect.width < room.rect.right
+                and entity.rect.left > room.rect.left
+                and entity.rect.top >= room.rect.top
+                and entity.rect.bottom <= room.rect.bottom
             )
             pr = (
                 pr
-                or self.rect.right + self.rect.width > room.rect.left
-                and self.rect.right < room.rect.right
-                and self.rect.top >= room.rect.top
-                and self.rect.bottom <= room.rect.bottom
+                or entity.rect.right + entity.rect.width > room.rect.left
+                and entity.rect.right < room.rect.right
+                and entity.rect.top >= room.rect.top
+                and entity.rect.bottom <= room.rect.bottom
             )
     return pu, pd, pl, pr
 

@@ -1,10 +1,10 @@
 import pygame
 
 class Sword:
-    def __init__(self, holder, damage):
+    def __init__(self, holder, damage, size):
         self.holder = holder
         self.damage = damage
-        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, 64, 64)
+        self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, size, size)
         self.mode = "held"
         self.timer = 15
 

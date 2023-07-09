@@ -29,9 +29,11 @@ class Player(entity.Entity):
         super().__init__(0, 0, 64, 64, 10, 100, "player.png")
         self.state = "active"
         self.attack = False
+        self.pickup = False
         self.inventory = inventory.Inventory(640, 600)
-        self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30)
+        self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30, 64)
         self.active_item = self.inventory.hotbar[self.inventory.active_slot]
+        self.item_picked_up = "empty"
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
@@ -39,6 +41,7 @@ class Player(entity.Entity):
         if self.health < 100:
             self.health += 0.01
         self.check_damaged(enemies)
+        self.handle_pickups()
         if isinstance(self.active_item, weapon.Sword):
             self.attack = self.active_item.update(dt)
 
@@ -58,6 +61,26 @@ class Player(entity.Entity):
 
         if self.health <= 0:
             self.alive = False
+
+    def handle_pickups(self):
+        if self.item_picked_up == "empty":
+            return
+
+        for i, slot in enumerate(self.inventory.hotbar):
+            if slot == "empty" and self.item_picked_up != "empty":
+                if self.item_picked_up == "sword":
+                    self.inventory.hotbar[i] = weapon.Sword(self, 30, 64)
+                self.item_picked_up = "empty"
+                return
+        for spot, row in enumerate(self.inventory.space):
+            for i, slot in enumerate(row):
+                if slot == "empty" and self.item_picked_up != "empty":
+                    print("e")
+                    if self.item_picked_up == "sword":
+                        self.inventory.space[spot][i] = weapon.Sword(self, 30, 64)
+                    self.item_picked_up = "empty"
+                    return
+
 
     def draw(self, screen, scroll):
         super().draw(screen, scroll)
@@ -82,9 +105,11 @@ def load_level(level):
                 chests.append(dungeon.Chest(item[1], item[2]))
             elif item[0] == 3:
                 enemies.append(enemy.Zombie(item[1], item[2]))
+            elif item[0] == 4:
+                end = dungeon.End(item[1], item[2])
 
     # spits out list for level data
-    return rooms, chests, enemies
+    return rooms, chests, enemies, end
 
 
 # quit function
@@ -138,7 +163,6 @@ def game_over(state, screen, display, level):
     pygame.mouse.set_visible(False)
 
     clock = pygame.time.Clock()
-    clicked = True
 
     while state == "game over":
         for event in pygame.event.get():
@@ -166,6 +190,40 @@ def game_over(state, screen, display, level):
         main_loop(level, state, screen, display)
     elif state == "main menu":
         main_menu(state, screen, display)
+
+
+def win(state, screen, display, level):
+    main_menu_button = ui.Button("Main Menu", 640, 360, 400, 75)
+    quit_button = ui.Button("Quit", 640, 460, 400, 75)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    while state == "win":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                state = "quit"
+
+        screen.fill((255, 100, 100))
+        ui.title("Brr its cold down here",  640, 200, screen)
+        if main_menu_button.draw(screen):
+            state = "main menu"
+        if quit_button.draw(screen):
+            state = "quit"
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if state == "main menu":
+        main_menu(state, screen, display)
+    elif state == "quit":
+        quit()
 
 
 def paused(state, screen, display, level):
@@ -251,7 +309,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     pygame.mouse.set_visible(False)
 
     # load level from file
-    rooms, chests, enemies = load_level(level)
+    rooms, chests, enemies, end = load_level(level)
 
     # initialize objects
     player = Player()
@@ -301,6 +359,8 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         if key_pressed[pygame.K_DOWN]:
             player.direction = "down"
 
+        player.pickup = bool(key_pressed[pygame.K_q])
+        
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
         elif key_pressed[pygame.K_2]:
@@ -338,6 +398,8 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
         if player.health <= 0:
             state = "game over"
+        if player.rect.colliderect(end.rect):
+            state = "win"
 
 
         # draws to the screen
@@ -347,6 +409,7 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         for chest in chests:
             chest.generate_loot(player)
             chest.draw(screen, scroll)
+        end.draw(screen, scroll)
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
@@ -372,6 +435,8 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     if state == "quit":
         quit()
     elif state == "game over":
-         game_over(state, screen, display, level)
+        game_over(state, screen, display, level)
+    elif state == "win":
+        win(state, screen, display, level)
 
 main_menu(state, screen, display)

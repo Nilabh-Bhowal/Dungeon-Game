@@ -58,7 +58,7 @@ class Enemy(entity.Entity):
 class Zombie(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y, 64, 64, 4, 70, "player.png")
-        self.weapon = weapon.Sword(self, 10)
+        self.weapon = weapon.Sword(self, 10, 16)
         self.attack = False
 
     def move(self, player, dt, rooms):
