@@ -72,6 +72,7 @@ class Zombie(Enemy):
         if self.weapon.mode == "held" and random.randint(0, 15) == 15:
             self.weapon.mode = "attack"
 
-    def draw(self, screen, scroll):
-        self.weapon.draw(screen, scroll)
-        super().draw(screen, scroll)
+    def draw(self, screen, scroll, scale=1):
+        if scale == 1:
+            self.weapon.draw(screen, scroll)
+        super().draw(screen, scroll, scale)

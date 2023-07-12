@@ -27,13 +27,14 @@ state = "main menu"
 
 # player class
 class Player(entity.Entity):
-    def __init__(self):
+    def __init__(self, state):
         super().__init__(0, 0, 64, 64, 10, 100, "player.png")
         self.state = "active"
         self.attack = False
         self.pickup = False
         self.inventory = inventory.Inventory(640, 600)
-        self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30, 64)
+        if state != "lobby":
+            self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30, 64)
         self.active_item = self.inventory.hotbar[self.inventory.active_slot]
         self.item_picked_up = "empty"
 
@@ -77,7 +78,6 @@ class Player(entity.Entity):
         for spot, row in enumerate(self.inventory.space):
             for i, slot in enumerate(row):
                 if slot == "empty" and self.item_picked_up != "empty":
-                    print("e")
                     if self.item_picked_up == "sword":
                         self.inventory.space[spot][i] = weapon.Sword(self, 30, 64)
                     self.item_picked_up = "empty"
@@ -96,8 +96,10 @@ def load_level(level):
         items = (f.read().splitlines())
         items = [eval(item) for item in items]
         rooms = []
+        level_enters = []
         chests = []
         enemies = []
+        end = None
         for item in items:
             if item[0] == 0:
                 rooms.append(dungeon.DungeonRoom(item[1], item[2]))
@@ -109,9 +111,11 @@ def load_level(level):
                 enemies.append(enemy.Zombie(item[1], item[2]))
             elif item[0] == 4:
                 end = dungeon.End(item[1], item[2])
+            elif item[0] == 5:
+                level_enters.append(dungeon.LevelEnter(item[1], item[2], item[3]))
 
     # spits out list for level data
-    return rooms, chests, enemies, end
+    return rooms, chests, enemies, end, level_enters
 
 
 # quit function
@@ -138,7 +142,7 @@ def main_menu(state, screen, display):
         screen.fill((255, 100, 100))
         ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
         if play_button.draw(screen):
-            state = "level 1"
+            state = "lobby"
         if quit_button.draw(screen):
             state = "quit"
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -151,13 +155,13 @@ def main_menu(state, screen, display):
     if state == "quit":
         quit()
 
-    elif state == "level 1":
-        main_loop(1, state, screen, display)
+    elif state == "lobby":
+        lobby(state, screen, display)
 
 
 def game_over(state, screen, display, level):
     play_button = ui.Button("Restart", 640, 360, 400, 75)
-    main_menu_button = ui.Button("Main Menu", 640, 460, 400, 75)
+    lobby_button = ui.Button("Lobby", 640, 460, 400, 75)
     quit_button = ui.Button("Quit", 640, 560, 400, 75)
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -175,8 +179,8 @@ def game_over(state, screen, display, level):
         ui.title("You Ded",  640, 200, screen)
         if play_button.draw(screen):
             state = f"level {level}"
-        if main_menu_button.draw(screen):
-            state = "main menu"
+        if lobby_button.draw(screen):
+            state = "lobby"
         if quit_button.draw(screen):
             state = "quit"
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -190,12 +194,12 @@ def game_over(state, screen, display, level):
         quit()
     elif state == f"level {level}":
         main_loop(level, state, screen, display)
-    elif state == "main menu":
-        main_menu(state, screen, display)
+    elif state == "lobby":
+        lobby(state, screen, display)
 
 
 def win(state, screen, display, level):
-    main_menu_button = ui.Button("Main Menu", 640, 360, 400, 75)
+    lobby_button = ui.Button("Continue", 640, 360, 400, 75)
     quit_button = ui.Button("Quit", 640, 460, 400, 75)
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -211,8 +215,8 @@ def win(state, screen, display, level):
 
         screen.fill((255, 100, 100))
         ui.title("levil complet",  640, 200, screen)
-        if main_menu_button.draw(screen):
-            state = "main menu"
+        if lobby_button.draw(screen):
+            state = "lobby"
         if quit_button.draw(screen):
             state = "quit"
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -222,8 +226,8 @@ def win(state, screen, display, level):
 
         clock.tick(60)
 
-    if state == "main menu":
-        main_menu(state, screen, display)
+    if state == "lobby":
+        lobby(state, screen, display)
     elif state == "quit":
         quit()
 
@@ -231,7 +235,7 @@ def win(state, screen, display, level):
 def paused(state, screen, display, level):
     play_button = ui.Button("Continue", 640, 360, 400, 75)
     restart_button = ui.Button("Restart", 640, 460, 400, 75)
-    main_menu_button = ui.Button("Main Menu", 640, 560, 400, 75)
+    lobby_button = ui.Button("Return To Lobby", 640, 560, 400, 75)
     quit_button = ui.Button("Quit", 640, 660, 400, 75)
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -256,8 +260,8 @@ def paused(state, screen, display, level):
             state = f"level {level}"
             pause = False
             restart = True
-        if main_menu_button.draw(screen):
-            state = "main menu"
+        if lobby_button.draw(screen):
+            state = "lobby"
             pause = False
         if quit_button.draw(screen):
             state = "quit"
@@ -273,8 +277,8 @@ def paused(state, screen, display, level):
         quit()
     elif state == f"level {level}" and restart:
         main_loop(level, state, screen, display)
-    elif state == "main menu":
-        main_menu(state, screen, display)
+    elif state == "lobby":
+        lobby(state, screen, display)
 
 
 def open_inventory(screen, display, inventory):
@@ -302,6 +306,116 @@ def open_inventory(screen, display, inventory):
         clock.tick(60)
 
 
+def lobby(state, screen, display):
+
+    pressed = False
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    # load level from file
+    rooms, _, enemies, _, level_enters = load_level(0)
+    particles = []
+
+    # initialize objects
+    player = Player(state)
+
+    true_scroll = [-player.rect.x, -player.rect.y]
+    scroll = [0, 0]
+
+    level = None
+
+    # controls fps
+    clock = pygame.time.Clock()
+    pt = time.time()
+    dt = 1/60
+
+    while state == "lobby":
+        for event in pygame.event.get():
+            # check if player quits
+            if event.type == pygame.QUIT:
+                state = "quit"
+
+        # gets key inputs
+        key_pressed = pygame.key.get_pressed()
+        player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
+        player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
+        if key_pressed[pygame.K_SPACE]:
+            if player.active_item.mode == "held" and not pressed and isinstance(player.active_item, weapon.Sword):
+                player.active_item.mode = "attack"
+                pressed = True
+        else:
+            pressed = False
+
+        if key_pressed[pygame.K_LEFT]:
+            player.direction = "left"
+            particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
+        elif key_pressed[pygame.K_RIGHT]:
+            player.direction = "right"
+            particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
+        elif key_pressed[pygame.K_UP]:
+            player.direction = "up"
+            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
+        elif key_pressed[pygame.K_DOWN]:
+            player.direction = "down"
+            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
+
+
+        # sets the scroll value
+        true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
+                        - true_scroll[0]) / 25 * dt
+        true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
+                        - true_scroll[1]) / 25 * dt
+        scroll = true_scroll.copy()
+        scroll[0] = int(scroll[0])
+        scroll[1] = int(scroll[1])
+
+        # moves objects
+        player.move(dt, rooms, enemies)
+        for level_enter in level_enters:
+            level = level_enter.check_collision(player)
+            if isinstance(level, int):
+                state = f"level {level}"
+                break
+
+        for p in particles:
+            p.update(dt)
+            if p.size <= 0:
+                particles.remove(p)
+
+
+        # draws to the screen
+        screen.fill((255, 100, 100))
+        for room in rooms:
+            room.draw(screen, scroll)
+        for level_enter in level_enters:
+            level_enter.draw(screen, scroll)
+        player.draw(screen, scroll)
+
+        for p in particles:
+            p.draw(screen, scroll)
+
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        # updates display
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+
+        # ensures everything is running smoothly
+        clock.tick(60)
+        now = time.time()
+        dt = (now - pt) * 60
+        pt = now
+
+    if state == "quit":
+        quit()
+
+    main_loop(level, state, screen, display)
+
+
+
+
 def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     # scroll for camera
     pressed = False
@@ -311,11 +425,11 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     pygame.mouse.set_visible(False)
 
     # load level from file
-    rooms, chests, enemies, end = load_level(level)
+    rooms, chests, enemies, end, level_enters = load_level(level)
     particles = []
 
     # initialize objects
-    player = Player()
+    player = Player(state)
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -355,20 +469,16 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
         if key_pressed[pygame.K_LEFT]:
             player.direction = "left"
-            for _ in range(5):
-                particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-32, 32), (220, 220, 220), 7, 1, random.uniform(-0.7, 0.7), 0.1, 1))
+            particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
         elif key_pressed[pygame.K_RIGHT]:
             player.direction = "right"
-            for _ in range(5):
-                particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-32, 32), (220, 220, 220), 7, -1, random.uniform(-0.7, 0.7), 0.1, 1))
+            particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
         elif key_pressed[pygame.K_UP]:
             player.direction = "up"
-            for _ in range(5):
-                particles.append(particle.Particle(player.rect.centerx + random.randint(-32, 32), player.rect.bottom, (220, 220, 220), 7, random.uniform(-0.7, 0.7), 1, 0.1, 1))
+            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
         elif key_pressed[pygame.K_DOWN]:
             player.direction = "down"
-            for _ in range(5):
-                particles.append(particle.Particle(player.rect.centerx + random.randint(-32, 32), player.rect.top, (220, 220, 220), 7, random.uniform(-0.7, 0.7), -1, 0.1, 1))
+            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
 
         player.pickup = bool(key_pressed[pygame.K_q])
 

@@ -1,6 +1,7 @@
 import random
-
 import pygame
+
+import assets.scripts.ui as ui
 
 
 class Room:
@@ -8,8 +9,12 @@ class Room:
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
 
-    def draw(self, screen, scroll):
-        pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+    def draw(self, screen, scroll, scale=1):
+        x = (self.rect.x * scale - scroll[0])
+        y = (self.rect.y * scale - scroll[1])
+        width = self.rect.width * scale
+        height = self.rect.height * scale
+        pygame.draw.rect(screen, self.color, (x, y, width, height))
 
 
 class DungeonRoom(Room):
@@ -46,8 +51,8 @@ class Chest(Room):
             if player.item_picked_up != "empty":
                 break
 
-    def draw(self, screen, scroll):
-        super().draw(screen, scroll)
+    def draw(self, screen, scroll, scale=1):
+        super().draw(screen, scroll, scale)
         for item in self.dropped_items:
             pygame.draw.rect(screen, (255, 255, 255), (item[1].x - scroll[0], item[1].y - scroll[1], item[1].width, item[1].height))
 
@@ -63,8 +68,11 @@ class LevelEnter(Room):
         self.level = level
 
     def check_collision(self, player):
-        if player.rect.colliderect(self.rect):
-            return self.level
+        return self.level if player.rect.colliderect(self.rect) else None
+
+    def draw(self, screen, scroll, scale=1):
+        super().draw(screen, scroll, scale)
+        ui.title(str(self.level), self.rect.centerx * scale - scroll[0], self.rect.centery * scale - scroll[1], screen)
 
 
 def can_pass(entity, current_room, rooms):

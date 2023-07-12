@@ -30,12 +30,16 @@ class Entity:
                 self.rect.y += self.immune_timer
         dungeon.collide(self, rooms)
 
-    def draw(self, screen, scroll):
+    def draw(self, screen, scroll, scale=1):
+        x = (self.rect.x * scale - scroll[0])
+        y = (self.rect.y * scale - scroll[1])
+        width = self.rect.width * scale
+        height = self.rect.height * scale
         if self.direction == "left":
-            screen.blit(pygame.transform.rotate(self.img, -90), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, -90), (width, height)), (x, y))
         elif self.direction == "right":
-            screen.blit(pygame.transform.rotate(self.img, 90), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 90), (width, height)), (x, y))
         elif self.direction == "up":
-            screen.blit(pygame.transform.rotate(self.img, 180), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 180), (width, height)), (x, y))
         else:
-            screen.blit(self.img, (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            screen.blit(pygame.transform.scale(self.img, (width, height)), (x, y))
