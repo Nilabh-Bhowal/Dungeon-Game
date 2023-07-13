@@ -28,6 +28,9 @@ def save(num, level, items):
                 l = 5
                 level = item.level
                 f.write(f"[{l}, {item.rect.x}, {item.rect.y}, {level}]\n")
+            elif isinstance(item, dungeon.Lock):
+                l = 6
+                f.write(f"[{l}, {item.rect.x}, {item.rect.y}, {item.key}]\n")
             else:
                 f.write(f"[{l}, {item.rect.x}, {item.rect.y}, False]\n")
 
@@ -79,7 +82,10 @@ s = 0
 pressed = False
 
 clock = pygame.time.Clock()
-buttons = [ui.Button("Room", 1130, 200, 200, 50), ui.Button("Corridor", 1130, 300, 200, 50), ui.Button("Chest", 1130, 400, 200, 50), ui.Button("Zombie", 1130, 500, 200, 50), ui.Button("End", 1130, 600, 200, 50), ui.Button("Level Enter", 1130, 700, 200, 50)]
+buttons = [ui.Button("Room", 1130, 200, 200, 25), ui.Button("Corridor", 1130, 250, 200, 25), ui.Button("Chest", 1130, 300, 200, 25), ui.Button("Zombie", 1130, 350, 200, 25), ui.Button("End", 1130, 400, 200, 25), ui.Button("Level Enter", 1130, 450, 200, 25), ui.Button("Lock", 1130, 500, 200, 25)]
+#TODO: fix lol
+lock_prompt = ui.PromptBox("What is the key?")
+lock_prompt.prompted = True
 
 running = True
 while running:
@@ -87,6 +93,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        lock_prompt.handle_input(event)
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
@@ -196,6 +203,9 @@ while running:
                 items.append(dungeon.End(round(((pygame.mouse.get_pos()[0] + scroll[0]) / scale - (128 / 2)) / 32) * 32, round(((pygame.mouse.get_pos()[1] + scroll[1]) / scale - (128 / 2)) / 32) * 32))
             elif current_item == "Level Enter":
                 items.append(dungeon.LevelEnter(round(((pygame.mouse.get_pos()[0] + scroll[0]) / scale - (256 / 2)) / 32) * 32, round(((pygame.mouse.get_pos()[1] + scroll[1]) / scale - (128 / 2)) / 32) * 32, level_enter_level))
+            elif current_item == "Lock":
+                lock_prompt.prompt()
+
 
     else:
         if current_item == "Room":
@@ -210,6 +220,8 @@ while running:
             s = pygame.surface.Surface((128 * scale, 128 * scale))
         elif current_item == "Level Enter":
             s = pygame.surface.Surface((256 * scale, 128 * scale))
+        elif current_item == "Lock":
+            s = pygame.surface.Surface((256 * scale, 64 * scale))
         s.fill((0, 0, 0))
         s.set_alpha(128)
 
@@ -262,6 +274,11 @@ while running:
     for button in buttons:
         if button.draw(screen):
             current_item = button.text
+
+    output = lock_prompt.draw(screen)
+    if isinstance(output, str):
+        print(output)
+        items.append(dungeon.Lock(round(((pygame.mouse.get_pos()[0] + scroll[0]) / scale - (256 / 2)) / 32) * 32, round(((pygame.mouse.get_pos()[1] + scroll[1]) / scale - (64 / 2)) / 32) * 32, output))
 
     pygame.display.update()
     clock.tick(60)

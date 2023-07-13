@@ -75,6 +75,33 @@ class LevelEnter(Room):
         ui.title(str(self.level), self.rect.centerx * scale - scroll[0], self.rect.centery * scale - scroll[1], screen)
 
 
+class Lock(Room):
+    def __init__(self, x, y, key):
+        super().__init__(x, y, 256, 64, (255, 0, 0))
+        self.key = key
+        self.unlocked = False
+
+    def check_collision(self, player, key):
+        if not self.unlocked:
+            if player.rect.left < self.rect.right:
+                player.rect.left = self.rect.right
+            elif player.rect.right > self.rect.left:
+                player.rect.right = self.rect.left
+
+            if player.rect.top < self.rect.bottom:
+                player.rect.top = self.rect.bottom
+            elif player.rect.bottom > self.rect.top:
+                player.rect.bottom = self.rect.top
+
+        for item in player.keys:
+            if item == key:
+                self.unlocked = True
+
+    def draw(self, screen, scroll, scale=1):
+        if not self.unlocked:
+            super().draw(screen, scroll, scale)
+
+
 def can_pass(entity, current_room, rooms):
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:

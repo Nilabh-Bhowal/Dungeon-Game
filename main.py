@@ -136,6 +136,7 @@ def main_menu(state, screen, display):
 
     while state == "main menu":
         for event in pygame.event.get():
+            print(event)
             if event.type == pygame.QUIT:
                 state = "quit"
 
@@ -312,6 +313,9 @@ def lobby(state, screen, display):
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
+    a = 0
+    fade_surf = pygame.Surface((1280, 720))
+    fade = False
     pygame.mouse.set_visible(False)
 
     # load level from file
@@ -373,11 +377,17 @@ def lobby(state, screen, display):
 
         # moves objects
         player.move(dt, rooms, enemies)
-        for level_enter in level_enters:
-            level = level_enter.check_collision(player)
-            if isinstance(level, int):
-                state = f"level {level}"
-                break
+        if not fade:
+            for level_enter in level_enters:
+                level = level_enter.check_collision(player)
+                if isinstance(level, int):
+                    fade = True
+                    break
+
+        if fade:
+            a += 5
+        if a >= 250:
+            state = f"level {level}"
 
         for p in particles:
             p.update(dt)
@@ -386,6 +396,8 @@ def lobby(state, screen, display):
 
 
         # draws to the screen
+        fade_surf.set_alpha(a)
+        fade_surf.fill((255, 255, 255))
         screen.fill((255, 100, 100))
         for room in rooms:
             room.draw(screen, scroll)
@@ -397,6 +409,7 @@ def lobby(state, screen, display):
             p.draw(screen, scroll)
 
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(fade_surf, (0, 0))
 
         # updates display
         display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
@@ -424,8 +437,12 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
 
+    fade = False
+    a = 0
+    fade_surf = pygame.Surface((720, 1280))
+
     # load level from file
-    rooms, chests, enemies, end, level_enters = load_level(level)
+    rooms, chests, enemies, end, _ = load_level(level)
     particles = []
 
     # initialize objects
@@ -524,6 +541,11 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
         if player.health <= 0:
             state = "game over"
         if player.rect.colliderect(end.rect):
+            fade = True
+
+        if fade:
+            a += 5
+        if a >= 255:
             state = "win"
 
 
@@ -548,6 +570,10 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        fade_surf.set_alpha(a)
+        fade_surf.fill((255, 255, 255))
+        screen.blit(fade_surf, (0, 0))
 
         # updates display
         display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
