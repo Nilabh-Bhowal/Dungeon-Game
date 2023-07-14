@@ -66,7 +66,7 @@ class PromptBox:
         self.rect = pygame.Rect(290, 110, 700, 500)
         self.message = message
         self.input = ""
-        self.prompted = True
+        self.prompted = False
         self.text_box_rect = pygame.Rect(self.rect.x + 50, self.rect.y + 200, 600, 50)
         self.clicked_in = False
 
@@ -100,8 +100,6 @@ class PromptBox:
                 pygame.draw.rect(screen, (0, 0, 0), (text_rect.right + 5, text_rect.top, 5, 40))
             else:
                 pygame.draw.rect(screen, (0, 0, 0), (self.text_box_rect.left + 5, self.text_box_rect.top + 5, 5, 40))
-        return None
-
 
     def draw_text(self, screen, text, x, y, center=False):
         font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 40)

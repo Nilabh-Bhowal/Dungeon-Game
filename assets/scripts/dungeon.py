@@ -81,25 +81,29 @@ class Lock(Room):
         self.key = key
         self.unlocked = False
 
-    def check_collision(self, player, key):
+    def check_collision(self, player):
         if not self.unlocked:
-            if player.rect.left < self.rect.right:
-                player.rect.left = self.rect.right
-            elif player.rect.right > self.rect.left:
-                player.rect.right = self.rect.left
+            if self.rect.colliderect(player):
+                if player.rect.top < self.rect.bottom:
+                    player.rect.top = self.rect.bottom
+                elif player.rect.bottom > self.rect.top:
+                    player.rect.bottom = self.rect.top
+            if self.rect.colliderect(player):
+                if player.rect.left < self.rect.right:
+                    player.rect.left = self.rect.right
+                elif player.rect.right > self.rect.left:
+                    player.rect.right = self.rect.left
 
-            if player.rect.top < self.rect.bottom:
-                player.rect.top = self.rect.bottom
-            elif player.rect.bottom > self.rect.top:
-                player.rect.bottom = self.rect.top
 
         for item in player.keys:
-            if item == key:
+            if item == self.key:
                 self.unlocked = True
 
-    def draw(self, screen, scroll, scale=1):
+    def draw(self, screen, scroll, editor=False):
         if not self.unlocked:
-            super().draw(screen, scroll, scale)
+            super().draw(screen, scroll)
+            if editor:
+                ui.title(self.key, self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
 
 
 def can_pass(entity, current_room, rooms):

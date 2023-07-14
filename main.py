@@ -24,10 +24,11 @@ screen = pygame.Surface((1280, 720))
 
 # set the state of the window
 state = "main menu"
+keys = []
 
 # player class
 class Player(entity.Entity):
-    def __init__(self, state):
+    def __init__(self, state, keys):
         super().__init__(0, 0, 64, 64, 10, 100, "player.png")
         self.state = "active"
         self.attack = False
@@ -37,6 +38,7 @@ class Player(entity.Entity):
             self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30, 64)
         self.active_item = self.inventory.hotbar[self.inventory.active_slot]
         self.item_picked_up = "empty"
+        self.keys = keys
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
@@ -97,6 +99,7 @@ def load_level(level):
         items = [eval(item) for item in items]
         rooms = []
         level_enters = []
+        locks = []
         chests = []
         enemies = []
         end = None
@@ -113,9 +116,11 @@ def load_level(level):
                 end = dungeon.End(item[1], item[2])
             elif item[0] == 5:
                 level_enters.append(dungeon.LevelEnter(item[1], item[2], item[3]))
+            elif item[0] == 6:
+                locks.append(dungeon.Lock(item[1], item[2], str(item[3])))
 
     # spits out list for level data
-    return rooms, chests, enemies, end, level_enters
+    return rooms, chests, enemies, end, level_enters, locks
 
 
 # quit function
@@ -194,12 +199,13 @@ def game_over(state, screen, display, level):
     if state == "quit":
         quit()
     elif state == f"level {level}":
-        main_loop(level, state, screen, display)
+        game_loop(level, state, screen, display)
     elif state == "lobby":
         lobby(state, screen, display)
 
 
 def win(state, screen, display, level):
+    global keys
     lobby_button = ui.Button("Continue", 640, 360, 400, 75)
     quit_button = ui.Button("Quit", 640, 460, 400, 75)
 
@@ -228,6 +234,7 @@ def win(state, screen, display, level):
         clock.tick(60)
 
     if state == "lobby":
+        keys.append(f"{level + 1}0")
         lobby(state, screen, display)
     elif state == "quit":
         quit()
@@ -277,7 +284,7 @@ def paused(state, screen, display, level):
     if state == "quit":
         quit()
     elif state == f"level {level}" and restart:
-        main_loop(level, state, screen, display)
+        game_loop(level, state, screen, display)
     elif state == "lobby":
         lobby(state, screen, display)
 
@@ -308,6 +315,7 @@ def open_inventory(screen, display, inventory):
 
 
 def lobby(state, screen, display):
+    global keys
 
     pressed = False
 
@@ -319,11 +327,11 @@ def lobby(state, screen, display):
     pygame.mouse.set_visible(False)
 
     # load level from file
-    rooms, _, enemies, _, level_enters = load_level(0)
+    rooms, _, enemies, _, level_enters, locks = load_level(0)
     particles = []
 
     # initialize objects
-    player = Player(state)
+    player = Player(state, keys)
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -377,6 +385,8 @@ def lobby(state, screen, display):
 
         # moves objects
         player.move(dt, rooms, enemies)
+        for lock in locks:
+            lock.check_collision(player)
         if not fade:
             for level_enter in level_enters:
                 level = level_enter.check_collision(player)
@@ -403,6 +413,8 @@ def lobby(state, screen, display):
             room.draw(screen, scroll)
         for level_enter in level_enters:
             level_enter.draw(screen, scroll)
+        for lock in locks:
+            lock.draw(screen, scroll)
         player.draw(screen, scroll)
 
         for p in particles:
@@ -424,12 +436,13 @@ def lobby(state, screen, display):
     if state == "quit":
         quit()
 
-    main_loop(level, state, screen, display)
+    game_loop(level, state, screen, display)
 
 
 
 
-def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
+def game_loop(level, state, screen, display):
+    global keys  # sourcery skip: low-code-quality
     # scroll for camera
     pressed = False
 
@@ -439,14 +452,14 @@ def main_loop(level, state, screen, display):  # sourcery skip: low-code-quality
 
     fade = False
     a = 0
-    fade_surf = pygame.Surface((720, 1280))
+    fade_surf = pygame.Surface((1280, 720))
 
     # load level from file
-    rooms, chests, enemies, end, _ = load_level(level)
+    rooms, chests, enemies, end, _, locks = load_level(level)
     particles = []
 
     # initialize objects
-    player = Player(state)
+    player = Player(state, keys)
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
