@@ -43,6 +43,13 @@ class Player(entity.Entity):
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
+        for item in self.inventory.hotbar:
+            if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
+                self.keys.append(item[1])
+        for row in self.inventory.space:
+            for item in row:
+                if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
+                    self.keys.append(item[1])
         if self.switched:
             if self.inventory.hotbar[self.inventory.active_slot] == "sword":
                 self.active_item = weapon.Sword(self, 30, 64)
@@ -108,7 +115,6 @@ def load_level(level):
 
     # spits out list for level data
     return rooms, chests, enemies, end, level_enters, locks
-
 
 # quit function
 def quit():

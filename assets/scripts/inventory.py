@@ -108,7 +108,6 @@ class ChestStorage:
         self.y = 600
 
     def handle_mouse_interaction(self, item_carrying):
-        self.item_carrying = item_carrying
         mouse_pos = pygame.mouse.get_pos()
         mouse_pressed = pygame.mouse.get_pressed()[0]
 
@@ -117,19 +116,21 @@ class ChestStorage:
                 rect = pygame.Rect(self.x - 450 + spot * 100, self.y - 500 + index * 100, 75, 75)
 
                 if mouse_pressed and rect.collidepoint(mouse_pos) and not self.pressed:
-                    if self.item_carrying == "empty":
-                        self.item_carrying, row[spot] = item, "empty"
+                    if item_carrying == "empty":
+                        item_carrying, row[spot] = item, "empty"
                     elif row[spot] == "empty":
-                        row[spot], self.item_carrying = self.item_carrying, "empty"
+                        print(item_carrying)
+                        row[spot], item_carrying = item_carrying, "empty"
                     else:
-                        row[spot], self.item_carrying = self.item_carrying, row[spot]
+                        row[spot], item_carrying = item_carrying, row[spot]
 
         self.pressed = mouse_pressed
+        return item_carrying
 
     def draw(self, item_carrying, screen):
-        self.handle_mouse_interaction(item_carrying)
+        self.item_carrying = self.handle_mouse_interaction(item_carrying)
 
-        self.draw_inventory_space(screen)
+        self.draw_storage_space(screen)
 
         if self.item_carrying == "sword":
             pygame.draw.rect(screen, (255, 255, 255),
@@ -139,7 +140,7 @@ class ChestStorage:
         return self.item_carrying
 
 
-    def draw_inventory_space(self, screen):
+    def draw_storage_space(self, screen):
 
         for index, row in enumerate(self.space):
             for spot, item in enumerate(row):

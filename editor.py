@@ -73,11 +73,11 @@ def open_inventory(chest, screen):
     inventory_open = True
     quitted = False
     items = ["sword", "key", "empty", "empty", "empty", "empty", "empty", "empty", "empty"]
+    trash = pygame.Rect(1165, 600, 75, 75)
     key_prompt = ui.PromptBox("Which lock is this for?")
     key_prompt.prompted = True
     item_carrying = "empty"
     while inventory_open:
-        print(item_carrying)
         for event in pygame.event.get():
             key_prompt.handle_input(event)
             if event.type == pygame.QUIT:
@@ -97,6 +97,9 @@ def open_inventory(chest, screen):
                 elif item == "key":
                     key_prompt.prompt()
 
+        if mouse_pressed and trash.collidepoint(mouse_pos):
+            item_carrying = "empty"
+
         screen.fill((255, 100, 100))
         for spot, item in enumerate(items):
             s = pygame.surface.Surface((75, 75))
@@ -107,11 +110,17 @@ def open_inventory(chest, screen):
 
             if item == "sword":
                 pygame.draw.rect(screen, (255, 255, 255), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
-            if item == "sword":
-                pygame.draw.rect(screen, (255, 255, 255), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
+            if item == "key":
+                pygame.draw.rect(screen, (255, 0, 0), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
+        s = pygame.surface.Surface((75, 75))
+        s.set_alpha(200)
+        s.fill((127, 127, 127))
+        screen.blit(s, trash)
+        pygame.draw.rect(screen, (0, 0, 0), trash, 5)
         item_carrying = chest.draw_storage(item_carrying, screen)
         if output := key_prompt.draw(screen):
-            item_carrying = ["key", output]
+            item_carrying = ["key", str(output)]
+            key_prompt.input = ""
         pygame.display.update()
     return quitted
 
