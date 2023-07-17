@@ -1,4 +1,5 @@
 import pygame
+import random
 
 import assets.scripts.dungeon as dungeon
 

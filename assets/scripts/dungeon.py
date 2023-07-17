@@ -2,6 +2,7 @@ import random
 import pygame
 
 import assets.scripts.ui as ui
+import assets.scripts.inventory as inventory
 
 
 class Room:
@@ -28,33 +29,16 @@ class Corridor(Room):
 
 
 class Chest(Room):
-    def __init__(self, x, y):
+    def __init__(self, x, y, storage=None):
         super().__init__(x, y, 128, 64, (255, 175, 112))
+        self.items = inventory.ChestStorage()
+        if storage:
+            self.items.space = storage
         self.dropped_items = []
         self.empty = False
 
-    def generate_loot(self, player):
-        if self.rect.colliderect(player.rect) and not self.empty:
-            for _ in range(13):
-                self.dropped_items.append(["sword", pygame.Rect(self.rect.centerx + random.randint(-64, 64), self.rect.centery + random.randint(-32, 32), 32, 32)])
-            self.empty = True
-
-        self.player_pickup(player)
-
-    def player_pickup(self, player):
-        for item in self.dropped_items:
-            if player.pickup and item[1].colliderect(player.rect):
-                player.item_picked_up = item[0]
-                self.dropped_items.remove(item)
-            else:
-                player.item_picked_up = "empty"
-            if player.item_picked_up != "empty":
-                break
-
-    def draw(self, screen, scroll, scale=1):
-        super().draw(screen, scroll, scale)
-        for item in self.dropped_items:
-            pygame.draw.rect(screen, (255, 255, 255), (item[1].x - scroll[0], item[1].y - scroll[1], item[1].width, item[1].height))
+    def draw_storage(self, item_carrying, screen):
+        return self.items.draw(item_carrying, screen)
 
 
 class End(Room):
@@ -106,52 +90,43 @@ class Lock(Room):
                 ui.title(self.key, self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
 
 
-def can_pass(entity, current_room, rooms):
+def can_pass(player, current_room, rooms):
+    # sourcery skip: instance-method-first-arg-name
     pu, pd, pl, pr = [False, False, False, False]
     for room in rooms:
         if room != current_room:
-            pu = (
-                pu
-                or entity.rect.top - entity.rect.height < room.rect.bottom
-                and entity.rect.top > room.rect.top
-                and entity.rect.left >= room.rect.left
-                and entity.rect.right <= room.rect.right
-            )
-            pd = (
-                pd
-                or entity.rect.bottom + entity.rect.height > room.rect.top
-                and entity.rect.bottom < room.rect.bottom
-                and entity.rect.left >= room.rect.left
-                and entity.rect.right <= room.rect.right
-            )
-            pl = (
-                pl
-                or entity.rect.left - entity.rect.width < room.rect.right
-                and entity.rect.left > room.rect.left
-                and entity.rect.top >= room.rect.top
-                and entity.rect.bottom <= room.rect.bottom
-            )
-            pr = (
-                pr
-                or entity.rect.right + entity.rect.width > room.rect.left
-                and entity.rect.right < room.rect.right
-                and entity.rect.top >= room.rect.top
-                and entity.rect.bottom <= room.rect.bottom
-            )
+            pu = pu or player.rect.top - player.rect.height < room.rect.bottom \
+                and player.rect.top > room.rect.top \
+                and player.rect.left >= room.rect.left - 21 \
+                and player.rect.right <= room.rect.right + 21
+            pd = pd or player.rect.bottom + player.rect.height > room.rect.top \
+                and player.rect.bottom < room.rect.bottom\
+                and player.rect.left >= room.rect.left - 21 \
+                and player.rect.right <= room.rect.right + 21
+            pl = pl or player.rect.left - player.rect.width < room.rect.right \
+                and player.rect.left > room.rect.left \
+                and player.rect.top >= room.rect.top - 21 \
+                and player.rect.bottom <= room.rect.bottom + 21
+            pr = pr or player.rect.right + player.rect.width > room.rect.left \
+                and player.rect.right < room.rect.right \
+                and player.rect.top >= room.rect.top - 21 \
+                and player.rect.bottom <= room.rect.bottom + 21
     return pu, pd, pl, pr
 
 
 # control player collision within room
-def collide(entity, rooms):
+def collide(player, rooms):
     for room in rooms:
-        if entity.rect.colliderect(room):
-            pu, pd, pl, pr = can_pass(entity, room, rooms)
-            if not pl and entity.rect.left <= room.rect.left + 5:
-                entity.rect.left = room.rect.left + 11
-            elif not pr and entity.rect.right >= room.rect.right - 5:
-                entity.rect.left = room.rect.right - entity.rect.width - 11
+        if player.rect.colliderect(room):
+            pu, pd, pl, pr = can_pass(player, room, rooms)
+            if not pl and player.rect.left <= room.rect.left + 5:
+                player.rect.left = room.rect.left + 11
+                player.movement[0] = 0
+            elif not pr and player.rect.right >= room.rect.right - 5:
+                player.rect.left = room.rect.right - player.rect.width - 11
+                player.movement[0] = 0
 
-            if not pu and entity.rect.top < room.rect.top + 5:
-                entity.rect.top = room.rect.top + 11
-            elif not pd and entity.rect.bottom >= room.rect.bottom - 5:
-                entity.rect.top = room.rect.bottom - entity.rect.height - 11
+            if not pu and player.rect.top < room.rect.top + 5:
+                player.rect.top = room.rect.top + 11
+            elif not pd and player.rect.bottom >= room.rect.bottom - 5:
+                player.rect.top = room.rect.bottom - player.rect.height - 11

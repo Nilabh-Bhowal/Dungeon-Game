@@ -33,20 +33,25 @@ class Player(entity.Entity):
         self.state = "active"
         self.attack = False
         self.pickup = False
-        self.inventory = inventory.Inventory(640, 600)
+        self.switched = True
+        self.inventory = inventory.Inventory()
         if state != "lobby":
-            self.inventory.hotbar[self.inventory.active_slot] = weapon.Sword(self, 30, 64)
+            self.inventory.hotbar[self.inventory.active_slot] = "sword"
         self.active_item = self.inventory.hotbar[self.inventory.active_slot]
         self.item_picked_up = "empty"
         self.keys = keys
 
     def move(self, dt, rooms, enemies):
         super().move(dt, rooms)
-        self.active_item = self.inventory.hotbar[self.inventory.active_slot]
+        if self.switched:
+            if self.inventory.hotbar[self.inventory.active_slot] == "sword":
+                self.active_item = weapon.Sword(self, 30, 64)
+            else:
+                self.active_item = "empty"
+            self.switched = False
         if self.health < 100:
             self.health += 0.01
         self.check_damaged(enemies)
-        self.handle_pickups()
         if isinstance(self.active_item, weapon.Sword):
             self.attack = self.active_item.update(dt)
 
@@ -66,24 +71,6 @@ class Player(entity.Entity):
 
         if self.health <= 0:
             self.alive = False
-
-    def handle_pickups(self):
-        if self.item_picked_up == "empty":
-            return
-
-        for i, slot in enumerate(self.inventory.hotbar):
-            if slot == "empty" and self.item_picked_up != "empty":
-                if self.item_picked_up == "sword":
-                    self.inventory.hotbar[i] = weapon.Sword(self, 30, 64)
-                self.item_picked_up = "empty"
-                return
-        for spot, row in enumerate(self.inventory.space):
-            for i, slot in enumerate(row):
-                if slot == "empty" and self.item_picked_up != "empty":
-                    if self.item_picked_up == "sword":
-                        self.inventory.space[spot][i] = weapon.Sword(self, 30, 64)
-                    self.item_picked_up = "empty"
-                    return
 
 
     def draw(self, screen, scroll):
@@ -109,7 +96,7 @@ def load_level(level):
             elif item[0] == 1:
                 rooms.append(dungeon.Corridor(item[1], item[2]))
             elif item[0] == 2:
-                chests.append(dungeon.Chest(item[1], item[2]))
+                chests.append(dungeon.Chest(item[1], item[2], item[3]))
             elif item[0] == 3:
                 enemies.append(enemy.Zombie(item[1], item[2]))
             elif item[0] == 4:
@@ -141,7 +128,6 @@ def main_menu(state, screen, display):
 
     while state == "main menu":
         for event in pygame.event.get():
-            print(event)
             if event.type == pygame.QUIT:
                 state = "quit"
 
@@ -314,6 +300,38 @@ def open_inventory(screen, display, inventory):
         clock.tick(60)
 
 
+def open_chest(screen, display, inventory, items):
+    inventory_open = True
+
+    item_carrying = "empty"
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+
+    clock = pygame.time.Clock()
+    while inventory_open:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                inventory_open = False
+
+        screen.fill((255, 100, 100))
+        inventory.draw_hotbar(screen)
+        item_carrying = inventory.handle_hotbar_mouse_interaction(item_carrying)
+        item_carrying = items.draw(item_carrying, screen)
+        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+    return inventory, items
+
+
+
 def lobby(state, screen, display):
     global keys
 
@@ -439,8 +457,6 @@ def lobby(state, screen, display):
     game_loop(level, state, screen, display)
 
 
-
-
 def game_loop(level, state, screen, display):
     global keys  # sourcery skip: low-code-quality
     # scroll for camera
@@ -484,6 +500,11 @@ def game_loop(level, state, screen, display):
                 elif event.key == pygame.K_p:
                     paused(state, screen, display, level)
                     pt = time.time()
+                elif event.key == pygame.K_q:
+                    for chest in chests:
+                        if player.rect.colliderect(chest.rect):
+                            player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
+                            pt = time.time()
 
 
         # gets key inputs
@@ -514,22 +535,31 @@ def game_loop(level, state, screen, display):
 
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
+            player.switched = True
         elif key_pressed[pygame.K_2]:
             player.inventory.active_slot = 1
+            player.switched = True
         elif key_pressed[pygame.K_3]:
             player.inventory.active_slot = 2
+            player.switched = True
         elif key_pressed[pygame.K_4]:
             player.inventory.active_slot = 3
+            player.switched = True
         elif key_pressed[pygame.K_5]:
             player.inventory.active_slot = 4
+            player.switched = True
         elif key_pressed[pygame.K_6]:
             player.inventory.active_slot = 5
+            player.switched = True
         elif key_pressed[pygame.K_7]:
             player.inventory.active_slot = 6
+            player.switched = True
         elif key_pressed[pygame.K_8]:
             player.inventory.active_slot = 7
+            player.switched = True
         elif key_pressed[pygame.K_9]:
             player.inventory.active_slot = 8
+            player.switched = True
 
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
@@ -542,6 +572,8 @@ def game_loop(level, state, screen, display):
 
         # moves objects
         player.move(dt, rooms, enemies)
+        for lock in locks:
+            lock.check_collision(player)
         for p in particles:
             p.update(dt)
             if p.size <= 0:
@@ -551,7 +583,7 @@ def game_loop(level, state, screen, display):
             if not enemy.alive:
                 enemies.remove(enemy)
 
-        if player.health <= 0:
+        if player.health <= 0 and not fade:
             state = "game over"
         if player.rect.colliderect(end.rect):
             fade = True
@@ -567,9 +599,10 @@ def game_loop(level, state, screen, display):
         for room in rooms:
             room.draw(screen, scroll)
         for chest in chests:
-            chest.generate_loot(player)
             chest.draw(screen, scroll)
         end.draw(screen, scroll)
+        for lock in locks:
+            lock.draw(screen, scroll)
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
@@ -580,7 +613,6 @@ def game_loop(level, state, screen, display):
 
         player.inventory.draw_hotbar(screen)
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
-
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
 

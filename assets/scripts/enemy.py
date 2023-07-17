@@ -6,14 +6,14 @@ import assets.scripts.entity as entity
 import assets.scripts.weapon as weapon
 
 class Enemy(entity.Entity):
-    def __init__(self, x, y, width, height, speed, health, img):
+    def __init__(self, x, y, width, height, speed, range, health, img):
         super().__init__(x, y, width, height, speed, health, img)
         self.immune = False
         self.immune_timer = 0
         self.knockback_direction = self.direction
         self.near_player = False
         self.state = "idle"
-        self.range = random.randint(600, 800)
+        self.range = range
 
     def move(self, player, dt, rooms):
         super().move(dt, rooms)
@@ -57,7 +57,7 @@ class Enemy(entity.Entity):
 
 class Zombie(Enemy):
     def __init__(self, x, y):
-        super().__init__(x, y, 64, 64, 4, 70, "player.png")
+        super().__init__(x, y, 64, 64, 4, 400, 70, "player.png")
         self.weapon = weapon.Sword(self, 10, 16)
         self.attack = False
 
@@ -73,6 +73,5 @@ class Zombie(Enemy):
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll, scale=1):
-        if scale == 1:
-            self.weapon.draw(screen, scroll)
+        self.weapon.draw(screen, scroll)
         super().draw(screen, scroll, scale)
