@@ -68,19 +68,19 @@ class Lock(Room):
 
     def check_collision(self, player):
         if not self.unlocked and self.rect.colliderect(player):
-            if player.rect.top <= self.rect.bottom and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
-                player.rect.top = self.rect.bottom
+            if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+                player.rect.top = self.rect.bottom + 11
                 player.movement[1] = 0
                 return
-            elif player.rect.bottom >= self.rect.top and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
-                player.rect.bottom = self.rect.top
+            elif player.rect.bottom >= self.rect.top - 5 and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+                player.rect.bottom = self.rect.top - 11
                 player.movement[1] = 0
                 return
-            if player.rect.left <= self.rect.right and player.rect.left >= self.rect.left:
+            if player.rect.left <= self.rect.right + 5 and player.rect.left >= self.rect.left:
                 player.rect.left = self.rect.right + 11
                 player.movement[0] = 0
                 return
-            elif player.rect.right >= self.rect.left:
+            elif player.rect.right >= self.rect.left - 5:
                 player.rect.right = self.rect.left - 11
                 player.movement[0] = 0
                 return

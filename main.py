@@ -1,13 +1,13 @@
 import random
 import pygame
+import json
 import time
 import sys
 
 # import other files in project
 import assets.scripts.ui as ui
-import assets.scripts.inventory as inventory
 import assets.scripts.dungeon as dungeon
-import assets.scripts.entity as entity
+from assets.scripts.player import Player
 import assets.scripts.enemy as enemy
 import assets.scripts.weapon as weapon
 import assets.scripts.particle as particle
@@ -27,99 +27,35 @@ screen = pygame.Surface((1280, 720))
 state = "main menu"
 keys = []
 
-# player class
-class Player(entity.Entity):
-    def __init__(self, state, keys):
-        super().__init__(0, 0, 64, 64, 10, 100, "player.png")
-        self.state = "active"
-        self.attack = False
-        self.pickup = False
-        self.switched = True
-        self.inventory = inventory.Inventory()
-        if state != "lobby":
-            self.inventory.hotbar[0] = "sword"
-            self.inventory.hotbar[1] = "bow"
-        self.active_item = self.inventory.hotbar[self.inventory.active_slot]
-        self.item_picked_up = "empty"
-        self.keys = keys
 
-    def move(self, dt, rooms, enemies, scroll):
-        super().move(dt, rooms)
-        for item in self.inventory.hotbar:
-            if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
-                self.keys.append(item[1])
-        for row in self.inventory.space:
-            for item in row:
-                if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
-                    self.keys.append(item[1])
-        if self.switched:
-            if self.inventory.hotbar[self.inventory.active_slot] == "sword":
-                self.active_item = weapon.Sword(self, 30, 64)
-            elif self.inventory.hotbar[self.inventory.active_slot] == "bow":
-                self.active_item = weapon.Bow(self, 15, 20)
-            else:
-                self.active_item = "empty"
-            self.switched = False
-        if self.health < 100:
-            self.health += 0.01
-        self.check_damaged(enemies)
-        if isinstance(self.active_item, weapon.Sword):
-            self.attack = self.active_item.update(dt)
-        elif isinstance(self.active_item, weapon.Bow):
-            self.active_item.update(pygame.mouse.get_pos()[0] + scroll[0], pygame.mouse.get_pos()[1] + scroll[1], enemies, dt)
-
-    def check_damaged(self, enemies):
-        if self.immune:
-            self.immune_timer -= 1
-        if self.immune_timer <= 0 and self.immune:
-            self.immune = False
-            self.state = "active"
-        for enemy in enemies:
-            if self.rect.colliderect(enemy.weapon.rect) and enemy.attack and not self.immune:
-                self.health -= enemy.weapon.damage
-                self.state = "stunned"
-                self.knockback_direction = enemy.direction
-                self.immune = True
-                self.immune_timer = 15
-
-        if self.health <= 0:
-            self.alive = False
-
-
-    def draw(self, screen, scroll):
-        super().draw(screen, scroll)
-        if self.active_item != "empty":
-            self.active_item.draw(screen, scroll)
-
-
-# allows to load levels from file
 def load_level(level):
-    with open(f"assets/levels/{level}.txt", "r") as f:
-        items = (f.read().splitlines())
-        items = [eval(item) for item in items]
-        rooms = []
-        level_enters = []
-        locks = []
-        chests = []
-        enemies = []
-        end = None
-        for item in items:
-            if item[0] == 0:
-                rooms.append(dungeon.DungeonRoom(item[1], item[2]))
-            elif item[0] == 1:
-                rooms.append(dungeon.Corridor(item[1], item[2]))
-            elif item[0] == 2:
-                chests.append(dungeon.Chest(item[1], item[2], item[3]))
-            elif item[0] == 3:
-                enemies.append(enemy.Zombie(item[1], item[2]))
-            elif item[0] == 4:
-                end = dungeon.End(item[1], item[2])
-            elif item[0] == 5:
-                level_enters.append(dungeon.LevelEnter(item[1], item[2], item[3]))
-            elif item[0] == 6:
-                locks.append(dungeon.Lock(item[1], item[2], str(item[3])))
+    with open(f"assets/levels/{level}.json", "r") as f:
+        data = json.load(f)
 
-    # spits out list for level data
+    rooms = []
+    level_enters = []
+    locks = []
+    chests = []
+    enemies = []
+    end = None
+
+    for item in data:
+        if item["type"] == 0:
+            rooms.append(dungeon.DungeonRoom(item["x"], item["y"]))
+        elif item["type"] == 1:
+            rooms.append(dungeon.Corridor(item["x"], item["y"]))
+        elif item["type"] == 2:
+            chests.append(dungeon.Chest(item["x"], item["y"], item["space"]))
+        elif item["type"] == 3:
+            enemies.append(enemy.Zombie(item["x"], item["y"]))
+        elif item["type"] == 4:
+            end = dungeon.End(item["x"], item["y"])
+        elif item["type"] == 5:
+            level_enters.append(dungeon.LevelEnter(item["x"], item["y"], item["level"]))
+        elif item["type"] == 6:
+            locks.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
+
+    # spits out lists for level data
     return rooms, chests, enemies, end, level_enters, locks
 
 # quit function
@@ -148,6 +84,7 @@ def main_menu(state, screen, display):
         ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
         if play_button.draw(screen):
             state = "lobby"
+            click.play()
         if quit_button.draw(screen):
             state = "quit"
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -157,16 +94,10 @@ def main_menu(state, screen, display):
 
         clock.tick(60)
 
-    if state == "quit":
-        click.play()
-        quit()
-
-    elif state == "lobby":
-        click.play()
-        lobby(state, screen, display)
+    return state
 
 
-def game_over(state, screen, display, level):
+def game_over(state, level, screen, display):
     play_button = ui.Button("Restart", 640, 360, 400, 75)
     lobby_button = ui.Button("Lobby", 640, 460, 400, 75)
     quit_button = ui.Button("Quit", 640, 560, 400, 75)
@@ -197,15 +128,10 @@ def game_over(state, screen, display, level):
 
         clock.tick(60)
 
-    if state == "quit":
-        quit()
-    elif state == f"level {level}":
-        game_loop(level, state, screen, display)
-    elif state == "lobby":
-        lobby(state, screen, display)
+    return state
 
 
-def win(state, screen, display, level):
+def win(state, screen, display):
     global keys
     lobby_button = ui.Button("Continue", 640, 360, 400, 75)
     quit_button = ui.Button("Quit", 640, 460, 400, 75)
@@ -234,11 +160,7 @@ def win(state, screen, display, level):
 
         clock.tick(60)
 
-    if state == "lobby":
-        keys.append(f"{level + 1}0")
-        lobby(state, screen, display)
-    elif state == "quit":
-        quit()
+    return state
 
 
 def paused(state, screen, display, level):
@@ -281,13 +203,7 @@ def paused(state, screen, display, level):
         pygame.display.update()
 
         clock.tick(60)
-
-    if state == "quit":
-        quit()
-    elif state == f"level {level}" and restart:
-        game_loop(level, state, screen, display)
-    elif state == "lobby":
-        lobby(state, screen, display)
+    return state, restart
 
 
 def open_inventory(screen, display, inventory):
@@ -346,8 +262,7 @@ def open_chest(screen, display, inventory, items):
     return inventory, items
 
 
-
-def lobby(state, screen, display):
+def lobby(state, screen, display):  # sourcery skip: low-code-quality
     global keys
 
     pressed = False
@@ -466,13 +381,10 @@ def lobby(state, screen, display):
         dt = (now - pt) * 60
         pt = now
 
-    if state == "quit":
-        quit()
-
-    game_loop(level, state, screen, display)
+    return state
 
 
-def game_loop(level, state, screen, display):
+def game_loop(state, screen, display):
     global keys  # sourcery skip: low-code-quality
     pressed = False
 
@@ -483,6 +395,9 @@ def game_loop(level, state, screen, display):
     fade = False
     a = 0
     fade_surf = pygame.Surface((1280, 720))
+
+    level = int(state[6])
+    restart = False
 
     # load level from file
     rooms, chests, enemies, end, _, locks = load_level(level)
@@ -500,7 +415,7 @@ def game_loop(level, state, screen, display):
     dt = 1/60
 
     # main loop
-    while state == f"level {level}":
+    while state == f"level {level}" and not restart:
 
         for event in pygame.event.get():
             # check if player quits
@@ -512,7 +427,7 @@ def game_loop(level, state, screen, display):
                     open_inventory(screen, display, player.inventory)
                     pt = time.time()
                 elif event.key == pygame.K_p:
-                    paused(state, screen, display, level)
+                    state, restart = paused(state, screen, display, level)
                     pt = time.time()
                 elif event.key == pygame.K_q:
                     for chest in chests:
@@ -603,6 +518,7 @@ def game_loop(level, state, screen, display):
             a += 5
         if a >= 255:
             state = "win"
+            keys.append(f"{level + 1}0")
 
 
         # draws to the screen
@@ -641,12 +557,23 @@ def game_loop(level, state, screen, display):
         dt = (now - pt) * 60
         pt = now
 
+    return state, level
 
-    if state == "quit":
-        quit()
-    elif state == "game over":
-        game_over(state, screen, display, level)
+running = True
+while running:
+    if state == "main menu":
+        state = main_menu(state, screen, display)
+    elif state == "lobby":
+        state = lobby(state, screen, display)
+    elif state[0:5] == "level":
+        state, level = game_loop(state, screen, display)
+    elif state == "main menu":
+        state = main_menu(state, screen, display)
     elif state == "win":
-        win(state, screen, display, level)
+        state = win(state, screen, display)
+    elif state == "game over":
+        state = game_over(state, level, screen, display)
+    if state == "quit":
+        running = False
 
-main_menu(state, screen, display)
+quit()

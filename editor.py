@@ -1,4 +1,5 @@
 import pygame
+import json
 
 import assets.scripts.dungeon as dungeon
 import assets.scripts.weapon as weapon
@@ -10,50 +11,53 @@ pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 
 def save(num, level, items):
-    with open(f'assets/levels/{num}.txt', 'w') as f:
-        for room in level:
-            if isinstance(room, dungeon.DungeonRoom):
-                l = 0
-            elif isinstance(room, dungeon.Corridor):
-                l = 1
+    data = []
+    for room in level:
+        if isinstance(room, dungeon.DungeonRoom):
+            l = 0
+        elif isinstance(room, dungeon.Corridor):
+            l = 1
 
-            f.write(f"[{l}, {room.rect.x}, {room.rect.y}]\n")
+        data.append({"type": l, "x": room.rect.x, "y": room.rect.y})
 
-        for item in items:
-            if isinstance(item, enemy.Zombie):
-                l = 3
-            elif isinstance(item, dungeon.End):
-                l = 4
-            if isinstance(item, dungeon.LevelEnter):
-                f.write(f"[5, {item.rect.x}, {item.rect.y}, {item.level}]\n")
-            elif isinstance(item, dungeon.Lock):
-                f.write(f"[6, {item.rect.x}, {item.rect.y}, {item.key}]\n")
-            elif isinstance(item, dungeon.Chest):
-                f.write(f"[2, {item.rect.x}, {item.rect.y}, {item.items.space}]\n")
-            else:
-                f.write(f"[{l}, {item.rect.x}, {item.rect.y}]\n")
+    for item in items:
+        if isinstance(item, enemy.Zombie):
+            l = 3
+        elif isinstance(item, dungeon.End):
+            l = 4
+        if isinstance(item, dungeon.LevelEnter):
+            data.append({"type": 5, "x": item.rect.x, "y": item.rect.y, "level": item.level})
+        elif isinstance(item, dungeon.Lock):
+            data.append({"type": 6, "x": item.rect.x, "y": item.rect.y, "key": str(item.key)})
+        elif isinstance(item, dungeon.Chest):
+            data.append({"type": 2, "x": item.rect.x, "y": item.rect.y, "space": item.items.space})
+        else:
+            data.append({"type": l, "x": item.rect.x, "y": item.rect.y})
+
+    with open(f'assets/levels/{num}.json', 'w') as f:
+        json.dump(data, f)
 
 def load(num):
-    with open(f'assets/levels/{num}.txt', 'r') as f:
-        items = (f.read().splitlines())
-        items = [eval(item) for item in items]
-        level = []
-        things = []
-        for item in items:
-            if item[0] == 0:
-                level.append(dungeon.DungeonRoom(item[1], item[2]))
-            elif item[0] == 1:
-                level.append(dungeon.Corridor(item[1], item[2]))
-            elif item[0] == 2:
-                things.append(dungeon.Chest(item[1], item[2], item[3]))
-            elif item[0] == 3:
-                things.append(enemy.Zombie(item[1], item[2]))
-            elif item[0] == 4:
-                things.append(dungeon.End(item[1], item[2]))
-            elif item[0] == 5:
-                things.append(dungeon.LevelEnter(item[1], item[2], item[3]))
-            elif item[0] == 6:
-                things.append(dungeon.Lock(item[1], item[2], str(item[3])))
+    with open(f'assets/levels/{num}.json', 'r') as f:
+        data = json.load(f)
+
+    level = []
+    things = []
+    for item in data:
+        if item["type"] == 0:
+            level.append(dungeon.DungeonRoom(item["x"], item["y"]))
+        elif item["type"] == 1:
+            level.append(dungeon.Corridor(item["x"], item["y"]))
+        elif item["type"] == 2:
+            things.append(dungeon.Chest(item["x"], item["y"], item["space"]))
+        elif item["type"] == 3:
+            things.append(enemy.Zombie(item["x"], item["y"]))
+        elif item["type"] == 4:
+            things.append(dungeon.End(item["x"], item["y"]))
+        elif item["type"] == 5:
+            things.append(dungeon.LevelEnter(item["x"], item["y"], item["level"]))
+        elif item["type"] == 6:
+            things.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
 
     return level, things
 
