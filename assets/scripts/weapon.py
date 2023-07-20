@@ -1,6 +1,8 @@
 import pygame
 import math
 
+import assets.scripts.player as player
+
 class Weapon:
     def __init__(self, holder, damage, reload_time, size):
         self.holder = holder
@@ -12,15 +14,10 @@ class Weapon:
 
     def update(self, dt):
         self.update_mode(dt)
-
-        if self.holder.direction == "up":
-            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.top - self.rect.height, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "down":
-            self.rect = pygame.Rect(self.holder.rect.left, self.holder.rect.bottom, self.holder.rect.width, self.rect.height)
-        elif self.holder.direction == "left":
-            self.rect = pygame.Rect(self.holder.rect.left - self.rect.width, self.holder.rect.top, self.rect.width, self.holder.rect.height)
-        else:
-            self.rect = pygame.Rect(self.holder.rect.right, self.holder.rect.top, self.rect.width, self.holder.rect.height)
+        dx = (math.cos(math.radians(self.holder.angle - 90)))
+        dy = -(math.sin(math.radians(self.holder.angle - 90)))
+        self.rect.centerx = self.holder.rect.x + (dx * self.rect.width * 2)
+        self.rect.centery = self.holder.rect.y + (dy * self.rect.height * 2)
 
         # allows the ability to check if holder attacked
         return self.mode == "attack"
@@ -37,7 +34,12 @@ class Weapon:
             self.timer = (self.reload) * dt
 
     def draw(self, screen, scroll):
-        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        draw_surf = pygame.Surface((self.rect.width, self.rect.height)).convert_alpha()
+        draw_surf.fill((255, 255, 255))
+        draw_surf = pygame.transform.rotate(draw_surf, self.holder.angle)
+        dx = (math.cos(math.radians(self.holder.angle - 90)))
+        dy = -(math.sin(math.radians(self.holder.angle - 90)))
+        screen.blit(draw_surf, ((self.holder.rect.centerx - scroll[0]) - (draw_surf.get_width() / 2) + (dx * (self.rect.width + 16)), (self.holder.rect.centery - scroll[1]) - (draw_surf.get_height() / 2) + (dy * (self.rect.height + 16))))
 
 
 class Sword(Weapon):
@@ -71,6 +73,10 @@ class Bow(Weapon):
             for opponent in opponents:
                 if arrow.rect.colliderect(opponent.rect):
                     opponent.health -= self.damage
+                    opponent.state = "stunned"
+                    opponent.knockback_angle = -math.degrees(arrow.angle) + 90
+                    opponent.immune = True
+                    opponent.immune_timer = 15
                     arrows_to_remove.append(arrow)
         for arrow in arrows_to_remove:
             self.arrows.remove(arrow)

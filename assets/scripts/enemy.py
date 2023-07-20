@@ -10,7 +10,6 @@ class Enemy(entity.Entity):
         super().__init__(x, y, width, height, speed, health, img)
         self.immune = False
         self.immune_timer = 0
-        self.knockback_direction = self.direction
         self.near_player = False
         self.state = "idle"
         self.range = range
@@ -21,19 +20,16 @@ class Enemy(entity.Entity):
 
         if self.state == "target":
             self.target_player(player)
-        elif self.state == "stunned":
-            self.movement = [0, 0]
 
 
         if math.hypot(self.rect.centerx - player.rect.centerx, self.rect.centery - player.rect.centery) < self.range and self.state not in ["stunned", "attack"]:
             self.state = "target"
 
-        self.direction = "right" if self.movement[0] > 0 else "left"
-
     def target_player(self, player):
         dx = self.rect.centerx - player.rect.centerx
         dy = self.rect.centery - player.rect.centery
         angle = math.atan2(dy, dx)
+        self.angle = -math.degrees(angle) - 90
         self.movement[0] = -math.cos(angle)
         self.movement[1] = -math.sin(angle)
 
@@ -47,12 +43,18 @@ class Enemy(entity.Entity):
         if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
             self.health -= random.randint(20, 40)
             self.state = "stunned"
-            self.knockback_direction = player.direction
+            self.knockback_angle = player.angle
             self.immune = True
             self.immune_timer = 15
 
         if self.health <= 0:
             self.alive = False
+
+    def draw(self, screen, scroll):
+        super().draw(screen, scroll)
+        if self.health < self.max_health:
+            pygame.draw.rect(screen, (255, 0, 0), (self.rect.centerx - scroll[0], self.rect.y - scroll[1] + 10, 20, 5))
+            pygame.draw.rect(screen, (0, 255, 0), (self.rect.centerx - scroll[0], self.rect.y - scroll[1] + 10, 20 / self.max_health * self.health, 5))
 
 
 class Zombie(Enemy):
@@ -72,6 +74,6 @@ class Zombie(Enemy):
         if self.weapon.mode == "held" and random.randint(0, 15) == 15:
             self.weapon.mode = "attack"
 
-    def draw(self, screen, scroll, scale=1):
+    def draw(self, screen, scroll):
         self.weapon.draw(screen, scroll)
-        super().draw(screen, scroll, scale)
+        super().draw(screen, scroll)

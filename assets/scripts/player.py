@@ -1,8 +1,10 @@
 import pygame
+import math
 
 import assets.scripts.entity as entity
 import assets.scripts.inventory as inventory
 import assets.scripts.weapon as weapon
+import assets.scripts.particle as particle
 
 # player class
 class Player(entity.Entity):
@@ -22,6 +24,9 @@ class Player(entity.Entity):
 
     def move(self, dt, rooms, enemies, scroll):
         super().move(dt, rooms)
+        dx = pygame.mouse.get_pos()[0] - (self.rect.centerx - scroll[0])
+        dy = pygame.mouse.get_pos()[1] - (self.rect.centery - scroll[1])
+        self.angle = -math.degrees(math.atan2(dy, dx)) + 90
         for item in self.inventory.hotbar:
             if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
                 self.keys.append(item[1])
@@ -55,7 +60,7 @@ class Player(entity.Entity):
             if self.rect.colliderect(enemy.weapon.rect) and enemy.attack and not self.immune:
                 self.health -= enemy.weapon.damage
                 self.state = "stunned"
-                self.knockback_direction = enemy.direction
+                self.knockback_angle = enemy.angle
                 self.immune = True
                 self.immune_timer = 15
 

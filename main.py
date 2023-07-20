@@ -23,9 +23,6 @@ pygame.display.set_caption("Goofy Ahh Dungeon Game")
 pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png").convert())
 screen = pygame.Surface((1280, 720))
 
-# set the state of the window
-state = "main menu"
-keys = []
 
 
 def load_level(level):
@@ -276,7 +273,6 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
 
     # load level from file
     rooms, _, enemies, _, level_enters, locks = load_level(0)
-    particles = []
 
     # initialize objects
     player = Player(state, keys)
@@ -308,19 +304,6 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         else:
             pressed = False
 
-        if key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a]:
-            player.direction = "left"
-            particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]:
-            player.direction = "right"
-            particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_UP] or key_pressed[pygame.K_w]:
-            player.direction = "up"
-            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]:
-            player.direction = "down"
-            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
-
 
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
@@ -347,11 +330,6 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         if a >= 250:
             state = f"level {level}"
 
-        for p in particles:
-            p.update(dt)
-            if p.size <= 0:
-                particles.remove(p)
-
 
         # draws to the screen
         fade_surf.set_alpha(a)
@@ -364,8 +342,7 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         for lock in locks:
             lock.draw(screen, scroll)
         player.draw(screen, scroll)
-        for p in particles:
-            p.draw(screen, scroll)
+
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
 
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
@@ -401,10 +378,11 @@ def game_loop(state, screen, display):
 
     # load level from file
     rooms, chests, enemies, end, _, locks = load_level(level)
-    particles = []
 
     # initialize objects
     player = Player(state, keys)
+
+    death_particles = particle.ParticleEmitter()
 
     true_scroll = [0, 0]
     scroll = [0, 0]
@@ -449,19 +427,6 @@ def game_loop(state, screen, display):
         else:
             pressed = False
 
-        if key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a]:
-            player.direction = "left"
-            particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]:
-            player.direction = "right"
-            particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_UP] or key_pressed[pygame.K_w]:
-            player.direction = "up"
-            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]:
-            player.direction = "down"
-            particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
-
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
             player.switched = True
@@ -502,12 +467,15 @@ def game_loop(state, screen, display):
         player.move(dt, rooms, enemies, scroll)
         for lock in locks:
             lock.check_collision(player)
-        for p in particles:
-            p.update(dt)
-        particles = [p for p in particles if p.size > 0]
-        enemies = [enemy for enemy in enemies if enemy.alive]
-        for enemy in enemies:
+        death_particles.update(dt)
+        removed_enemies = []
+        for i, enemy in enumerate(enemies):
+            if enemy.health <= 0:
+                removed_enemies.append(i)
+                death_particles.add_burst(enemy.rect.centerx, enemy.rect.centery, (200, 200, 200), 20, 5, 0.5, 50)
             enemy.move(player, dt, rooms)
+        for i in reversed(removed_enemies):
+            enemies.pop(i)
 
         if player.health <= 0 and not fade:
             state = "game over"
@@ -533,8 +501,7 @@ def game_loop(state, screen, display):
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
-        for p in particles:
-            p.draw(screen, scroll)
+        death_particles.draw(screen, scroll)
 
 
         player.inventory.draw_hotbar(screen)
@@ -559,6 +526,9 @@ def game_loop(state, screen, display):
 
     return state, level
 
+# set the state of the window
+state = "main menu"
+keys = []
 running = True
 while running:
     if state == "main menu":
