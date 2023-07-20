@@ -42,10 +42,7 @@ class Enemy(entity.Entity):
 
         if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
             self.health -= random.randint(20, 40)
-            self.state = "stunned"
-            self.knockback_angle = player.angle
-            self.immune = True
-            self.immune_timer = 15
+            self.stun(player.angle)
 
         if self.health <= 0:
             self.alive = False

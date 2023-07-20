@@ -58,11 +58,7 @@ class Player(entity.Entity):
             self.state = "active"
         for enemy in enemies:
             if self.rect.colliderect(enemy.weapon.rect) and enemy.attack and not self.immune:
-                self.health -= enemy.weapon.damage
-                self.state = "stunned"
-                self.knockback_angle = enemy.angle
-                self.immune = True
-                self.immune_timer = 15
+                self.stun(enemy.angle)
 
         if self.health <= 0:
             self.alive = False

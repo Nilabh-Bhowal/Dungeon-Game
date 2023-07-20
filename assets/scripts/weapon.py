@@ -73,10 +73,7 @@ class Bow(Weapon):
             for opponent in opponents:
                 if arrow.rect.colliderect(opponent.rect):
                     opponent.health -= self.damage
-                    opponent.state = "stunned"
-                    opponent.knockback_angle = -math.degrees(arrow.angle) + 90
-                    opponent.immune = True
-                    opponent.immune_timer = 15
+                    opponent.stun(-math.degrees(arrow.angle) + 90)
                     arrows_to_remove.append(arrow)
         for arrow in arrows_to_remove:
             self.arrows.remove(arrow)

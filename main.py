@@ -413,19 +413,12 @@ def game_loop(state, screen, display):
                             player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
                             pt = time.time()
 
-            if event.type == pygame.MOUSEBUTTONDOWN and isinstance(player.active_item, weapon.Bow) and (player.active_item.mode == "held"):
+            if event.type == pygame.MOUSEBUTTONDOWN and issubclass(type(player.active_item), weapon.Weapon) and (player.active_item.mode == "held"):
                 player.active_item.mode = "attack"
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
-        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
-        if key_pressed[pygame.K_SPACE]:
-            if isinstance(player.active_item, weapon.Sword) and (player.active_item.mode == "held" and not pressed):
-                player.active_item.mode = "attack"
-                pressed = True
-        else:
-            pressed = False
 
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0

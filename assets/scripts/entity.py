@@ -19,6 +19,12 @@ class Entity:
         self.immune = False
         self.immune_timer = 15
 
+    def stun(self, knockback_angle):
+        self.state = "stunned"
+        self.knockback_angle = knockback_angle
+        self.immune = True
+        self.immune_timer = 15
+
     def move(self, dt, rooms):
         self.rect.x += self.speed * self.movement[0] * dt
         self.rect.y += self.speed * self.movement[1] * dt
