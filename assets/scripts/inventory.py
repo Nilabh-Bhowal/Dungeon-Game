@@ -1,7 +1,5 @@
 import pygame
 
-import assets.scripts.weapon as weapon
-
 class Inventory:
     def __init__(self):
         self.space = [["empty" for _ in range(9)] for _ in range(3)]
@@ -26,6 +24,7 @@ class Inventory:
                     if self.item_carrying == "empty":
                         self.item_carrying, row[spot] = item, "empty"
                     elif row[spot] == "empty":
+                        print("a")
                         row[spot], self.item_carrying = self.item_carrying, "empty"
                     else:
                         row[spot], self.item_carrying = self.item_carrying, row[spot]
@@ -57,6 +56,8 @@ class Inventory:
         if self.item_carrying == "sword":
             pygame.draw.rect(screen, (255, 255, 255),
                              (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
+        elif self.item_carrying == "bow":
+                    pygame.draw.rect(screen, (0, 255, 0), (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
         if isinstance(self.item_carrying, list) and self.item_carrying[0] == "key":
                     pygame.draw.rect(screen, (255, 0, 0), (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
 
@@ -75,6 +76,8 @@ class Inventory:
 
             if item == "sword":
                 pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
+            elif item == "bow":
+                pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
             if isinstance(item, list) and item[0] == "key":
                     pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
 
@@ -94,6 +97,8 @@ class Inventory:
 
                 if item == "sword":
                     pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
+                elif item == "bow":
+                    pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
                 if isinstance(item, list) and item[0] == "key":
                     pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
 
@@ -119,7 +124,6 @@ class ChestStorage:
                     if item_carrying == "empty":
                         item_carrying, row[spot] = item, "empty"
                     elif row[spot] == "empty":
-                        print(item_carrying)
                         row[spot], item_carrying = item_carrying, "empty"
                     else:
                         row[spot], item_carrying = item_carrying, row[spot]
@@ -135,6 +139,8 @@ class ChestStorage:
         if self.item_carrying == "sword":
             pygame.draw.rect(screen, (255, 255, 255),
                              (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
+        elif self.item_carrying == "bow":
+                    pygame.draw.rect(screen, (0, 255, 0), (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
         if isinstance(self.item_carrying, list) and self.item_carrying[0] == "key":
                     pygame.draw.rect(screen, (255, 0, 0), (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16, 32, 32))
         return self.item_carrying
@@ -155,5 +161,7 @@ class ChestStorage:
 
                 if item == "sword":
                     pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
+                if item == "bow":
+                    pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
                 if isinstance(item, list) and item[0] == "key":
                     pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))

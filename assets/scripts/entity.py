@@ -1,4 +1,5 @@
 import pygame
+import math
 import random
 
 import assets.scripts.dungeon as dungeon
@@ -8,7 +9,7 @@ class Entity:
         self.rect = pygame.Rect(x, y, width, height)
         self.speed = speed
         self.movement = [0, 0]
-        self.img = pygame.image.load(f"assets/images/entity/{img}")
+        self.img = pygame.image.load(f"assets/images/entity/{img}").convert()
         self.direction = "up"
         self.state = "idle"
         self.health = health
@@ -22,13 +23,13 @@ class Entity:
         if self.state == "stunned":
             self.movement = [0, 0]
             if self.knockback_direction == "left":
-                self.rect.x -= self.immune_timer
+                self.rect.x -= self.immune_timer * dt
             elif self.knockback_direction == "right":
-                self.rect.x += self.immune_timer
+                self.rect.x += self.immune_timer * dt
             elif self.knockback_direction == "up":
-                self.rect.y -= self.immune_timer
+                self.rect.y -= self.immune_timer * dt
             else:
-                self.rect.y += self.immune_timer
+                self.rect.y += self.immune_timer * dt
         dungeon.collide(self, rooms)
 
     def draw(self, screen, scroll, scale=1):
@@ -36,11 +37,12 @@ class Entity:
         y = (self.rect.y * scale - scroll[1])
         width = self.rect.width * scale
         height = self.rect.height * scale
-        if self.direction == "left":
-            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, -90), (width, height)), (x, y))
-        elif self.direction == "right":
-            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 90), (width, height)), (x, y))
-        elif self.direction == "up":
-            screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 180), (width, height)), (x, y))
-        else:
-            screen.blit(pygame.transform.scale(self.img, (width, height)), (x, y))
+        if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
+            if self.direction == "left":
+                screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, -90), (width, height)), (x, y))
+            elif self.direction == "right":
+                screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 90), (width, height)), (x, y))
+            elif self.direction == "up":
+                screen.blit(pygame.transform.scale(pygame.transform.rotate(self.img, 180), (width, height)), (x, y))
+            else:
+                screen.blit(pygame.transform.scale(self.img, (width, height)), (x, y))

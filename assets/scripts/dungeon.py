@@ -15,7 +15,8 @@ class Room:
         y = (self.rect.y * scale - scroll[1])
         width = self.rect.width * scale
         height = self.rect.height * scale
-        pygame.draw.rect(screen, self.color, (x, y, width, height))
+        if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
+            pygame.draw.rect(screen, self.color, (x, y, width, height))
 
 
 class DungeonRoom(Room):
@@ -66,17 +67,23 @@ class Lock(Room):
         self.unlocked = False
 
     def check_collision(self, player):
-        if not self.unlocked:
-            if self.rect.colliderect(player):
-                if player.rect.top <= self.rect.bottom - 5:
-                    player.rect.top = self.rect.bottom - 11
-                elif player.rect.bottom >= self.rect.top + 5:
-                    player.rect.bottom = self.rect.top + 11
-            if self.rect.colliderect(player):
-                if player.rect.left <= self.rect.right + 5:
-                    player.rect.left = self.rect.right + 11
-                elif player.rect.right >= self.rect.left - 5:
-                    player.rect.right = self.rect.left - 11
+        if not self.unlocked and self.rect.colliderect(player):
+            if player.rect.top <= self.rect.bottom and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+                player.rect.top = self.rect.bottom
+                player.movement[1] = 0
+                return
+            elif player.rect.bottom >= self.rect.top and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+                player.rect.bottom = self.rect.top
+                player.movement[1] = 0
+                return
+            if player.rect.left <= self.rect.right and player.rect.left >= self.rect.left:
+                player.rect.left = self.rect.right + 11
+                player.movement[0] = 0
+                return
+            elif player.rect.right >= self.rect.left:
+                player.rect.right = self.rect.left - 11
+                player.movement[0] = 0
+                return
 
 
         for item in player.keys:
@@ -128,5 +135,7 @@ def collide(player, rooms):
 
             if not pu and player.rect.top < room.rect.top + 5:
                 player.rect.top = room.rect.top + 11
+                player.movement[1] = 0
             elif not pd and player.rect.bottom >= room.rect.bottom - 5:
                 player.rect.top = room.rect.bottom - player.rect.height - 11
+                player.movement[1] = 0

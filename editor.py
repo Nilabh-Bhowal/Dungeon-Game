@@ -340,7 +340,6 @@ while running:
     output = lock_prompt.draw(screen)
     if output and current_item == "Lock":
         lock_prompt.prompted = True
-        print(pos)
         lock_item = dungeon.Lock(round(((pos[0] + scroll[0]) - (256 / 2)) / 32) * 32,
                                  round(((pos[1] + scroll[1]) - (64 / 2)) / 32) * 32,
                                  output)

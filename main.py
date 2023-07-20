@@ -14,12 +14,13 @@ import assets.scripts.particle as particle
 
 # initialize pygame
 pygame.init()
+pygame.mixer.init()
 pygame.display.init()
 
 # create window
 display = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Goofy Ahh Dungeon Game")
-pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png"))
+pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png").convert())
 screen = pygame.Surface((1280, 720))
 
 # set the state of the window
@@ -36,12 +37,13 @@ class Player(entity.Entity):
         self.switched = True
         self.inventory = inventory.Inventory()
         if state != "lobby":
-            self.inventory.hotbar[self.inventory.active_slot] = "sword"
+            self.inventory.hotbar[0] = "sword"
+            self.inventory.hotbar[1] = "bow"
         self.active_item = self.inventory.hotbar[self.inventory.active_slot]
         self.item_picked_up = "empty"
         self.keys = keys
 
-    def move(self, dt, rooms, enemies):
+    def move(self, dt, rooms, enemies, scroll):
         super().move(dt, rooms)
         for item in self.inventory.hotbar:
             if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
@@ -53,6 +55,8 @@ class Player(entity.Entity):
         if self.switched:
             if self.inventory.hotbar[self.inventory.active_slot] == "sword":
                 self.active_item = weapon.Sword(self, 30, 64)
+            elif self.inventory.hotbar[self.inventory.active_slot] == "bow":
+                self.active_item = weapon.Bow(self, 15, 20)
             else:
                 self.active_item = "empty"
             self.switched = False
@@ -61,6 +65,8 @@ class Player(entity.Entity):
         self.check_damaged(enemies)
         if isinstance(self.active_item, weapon.Sword):
             self.attack = self.active_item.update(dt)
+        elif isinstance(self.active_item, weapon.Bow):
+            self.active_item.update(pygame.mouse.get_pos()[0] + scroll[0], pygame.mouse.get_pos()[1] + scroll[1], enemies, dt)
 
     def check_damaged(self, enemies):
         if self.immune:
@@ -127,6 +133,7 @@ def main_menu(state, screen, display):
     quit_button = ui.Button("Quit", 640, 510, 500, 100)
 
     cursor = pygame.image.load("assets/images/cursor.png")
+    click = pygame.mixer.Sound("assets/sounds/effects/click.wav")
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
 
@@ -151,9 +158,11 @@ def main_menu(state, screen, display):
         clock.tick(60)
 
     if state == "quit":
+        click.play()
         quit()
 
     elif state == "lobby":
+        click.play()
         lobby(state, screen, display)
 
 
@@ -375,25 +384,25 @@ def lobby(state, screen, display):
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
-        player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
-        player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
+        player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
+        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
         if key_pressed[pygame.K_SPACE]:
-            if player.active_item.mode == "held" and not pressed and isinstance(player.active_item, weapon.Sword):
+            if isinstance(player.active_item, weapon.Sword) and (player.active_item.mode == "held" and not pressed):
                 player.active_item.mode = "attack"
                 pressed = True
         else:
             pressed = False
 
-        if key_pressed[pygame.K_LEFT]:
+        if key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a]:
             player.direction = "left"
             particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_RIGHT]:
+        elif key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]:
             player.direction = "right"
             particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_UP]:
+        elif key_pressed[pygame.K_UP] or key_pressed[pygame.K_w]:
             player.direction = "up"
             particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_DOWN]:
+        elif key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]:
             player.direction = "down"
             particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
 
@@ -408,7 +417,7 @@ def lobby(state, screen, display):
         scroll[1] = int(scroll[1])
 
         # moves objects
-        player.move(dt, rooms, enemies)
+        player.move(dt, rooms, enemies, scroll)
         for lock in locks:
             lock.check_collision(player)
         if not fade:
@@ -440,9 +449,9 @@ def lobby(state, screen, display):
         for lock in locks:
             lock.draw(screen, scroll)
         player.draw(screen, scroll)
-
         for p in particles:
             p.draw(screen, scroll)
+        ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
 
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
         screen.blit(fade_surf, (0, 0))
@@ -452,7 +461,7 @@ def lobby(state, screen, display):
         pygame.display.update()
 
         # ensures everything is running smoothly
-        clock.tick(60)
+        clock.tick(9999)
         now = time.time()
         dt = (now - pt) * 60
         pt = now
@@ -465,7 +474,6 @@ def lobby(state, screen, display):
 
 def game_loop(level, state, screen, display):
     global keys  # sourcery skip: low-code-quality
-    # scroll for camera
     pressed = False
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -483,7 +491,7 @@ def game_loop(level, state, screen, display):
     # initialize objects
     player = Player(state, keys)
 
-    true_scroll = [-player.rect.x, -player.rect.y]
+    true_scroll = [0, 0]
     scroll = [0, 0]
 
     # controls fps
@@ -512,32 +520,32 @@ def game_loop(level, state, screen, display):
                             player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
                             pt = time.time()
 
+            if event.type == pygame.MOUSEBUTTONDOWN and isinstance(player.active_item, weapon.Bow) and (player.active_item.mode == "held"):
+                player.active_item.mode = "attack"
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
-        player.movement[0] = key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT]
-        player.movement[1] = key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]
+        player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
+        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
         if key_pressed[pygame.K_SPACE]:
-            if player.active_item.mode == "held" and not pressed and isinstance(player.active_item, weapon.Sword):
+            if isinstance(player.active_item, weapon.Sword) and (player.active_item.mode == "held" and not pressed):
                 player.active_item.mode = "attack"
                 pressed = True
         else:
             pressed = False
 
-        if key_pressed[pygame.K_LEFT]:
+        if key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a]:
             player.direction = "left"
             particles.append(particle.Particle(player.rect.right, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, 1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_RIGHT]:
+        elif key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]:
             player.direction = "right"
             particles.append(particle.Particle(player.rect.left, player.rect.centery + random.randint(-16, 16), (71, 63, 49, 128), 10, -1000, random.uniform(-0.7, 0.7), 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_UP]:
+        elif key_pressed[pygame.K_UP] or key_pressed[pygame.K_w]:
             player.direction = "up"
             particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.bottom, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), 1000, 0.001, random.randint(1, 3)))
-        elif key_pressed[pygame.K_DOWN]:
+        elif key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]:
             player.direction = "down"
             particles.append(particle.Particle(player.rect.centerx + random.randint(-16, 16), player.rect.top, (71, 63, 49, 128), 10, random.uniform(-0.7, 0.7), -1000, 0.001, random.randint(1, 3)))
-
-        player.pickup = bool(key_pressed[pygame.K_q])
 
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
@@ -572,22 +580,19 @@ def game_loop(level, state, screen, display):
                         - true_scroll[0]) / 25 * dt
         true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
                         - true_scroll[1]) / 25 * dt
-        scroll = true_scroll.copy()
-        scroll[0] = int(scroll[0])
-        scroll[1] = int(scroll[1])
+
+        scroll = [int(true_scroll[0]), int(true_scroll[1])]
 
         # moves objects
-        player.move(dt, rooms, enemies)
+        player.move(dt, rooms, enemies, scroll)
         for lock in locks:
             lock.check_collision(player)
         for p in particles:
             p.update(dt)
-            if p.size <= 0:
-                particles.remove(p)
+        particles = [p for p in particles if p.size > 0]
+        enemies = [enemy for enemy in enemies if enemy.alive]
         for enemy in enemies:
             enemy.move(player, dt, rooms)
-            if not enemy.alive:
-                enemies.remove(enemy)
 
         if player.health <= 0 and not fade:
             state = "game over"
@@ -612,7 +617,6 @@ def game_loop(level, state, screen, display):
         player.draw(screen, scroll)
         for enemy in enemies:
             enemy.draw(screen, scroll)
-
         for p in particles:
             p.draw(screen, scroll)
 
@@ -621,6 +625,7 @@ def game_loop(level, state, screen, display):
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
 
         fade_surf.set_alpha(a)
         fade_surf.fill((255, 255, 255))
