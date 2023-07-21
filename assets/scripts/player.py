@@ -58,6 +58,7 @@ class Player(entity.Entity):
             self.state = "active"
         for enemy in enemies:
             if self.rect.colliderect(enemy.weapon.rect) and enemy.attack and not self.immune:
+                self.health -= enemy.weapon.damage
                 self.stun(enemy.angle)
 
         if self.health <= 0:

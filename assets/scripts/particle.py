@@ -16,7 +16,7 @@ class Particle:
     def update(self, dt):
         self.x += self.dx * self.speed * dt
         self.y += self.dy * self.speed * dt
-        self.size -= self.shrink
+        self.size -= self.shrink * dt
 
     def draw(self, screen, scroll):
         pygame.draw.circle(screen, self.color, (self.x - scroll[0], self.y - scroll[1]), self.size)
@@ -34,7 +34,10 @@ class ParticleEmitter:
             angle = random.uniform(0, 2 * math.pi)
             dx = math.cos(angle)
             dy = math.sin(angle)
-            self.particles.append(Particle(x, y, color, size, dx, dy, speed, shrink))
+            draw_x = x + random.randint(-16, 16)
+            draw_y = y + random.randint(-16, 16)
+            draw_shrink = shrink + random.uniform(-5, 5)
+            self.particles.append(Particle(draw_x, draw_y, color, size, dx, dy, speed, draw_shrink))
 
     def update(self, dt):
         particles_to_remove = []

@@ -326,7 +326,7 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
                     break
 
         if fade:
-            a += 5
+            a += 5 * dt
         if a >= 250:
             state = f"level {level}"
 
@@ -353,9 +353,10 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         pygame.display.update()
 
         # ensures everything is running smoothly
-        clock.tick(9999)
+        clock.tick(5)
         now = time.time()
         dt = (now - pt) * 60
+        dt = min(dt, 4)
         pt = now
 
     return state
@@ -363,7 +364,6 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
 
 def game_loop(state, screen, display):
     global keys  # sourcery skip: low-code-quality
-    pressed = False
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -419,6 +419,7 @@ def game_loop(state, screen, display):
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
         player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
+        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
 
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
@@ -465,7 +466,7 @@ def game_loop(state, screen, display):
         for i, enemy in enumerate(enemies):
             if enemy.health <= 0:
                 removed_enemies.append(i)
-                death_particles.add_burst(enemy.rect.centerx, enemy.rect.centery, (200, 200, 200), 20, 5, 0.5, 50)
+                death_particles.add_burst(enemy.rect.centerx, enemy.rect.centery, (200, 200, 200), 20, 5, 0.5, 10000)
             enemy.move(player, dt, rooms)
         for i in reversed(removed_enemies):
             enemies.pop(i)
@@ -476,7 +477,7 @@ def game_loop(state, screen, display):
             fade = True
 
         if fade:
-            a += 5
+            a += 5 * dt
         if a >= 255:
             state = "win"
             keys.append(f"{level + 1}0")
@@ -515,6 +516,7 @@ def game_loop(state, screen, display):
         clock.tick(60)
         now = time.time()
         dt = (now - pt) * 60
+        dt = min(dt, 4)
         pt = now
 
     return state, level
@@ -528,10 +530,8 @@ while running:
         state = main_menu(state, screen, display)
     elif state == "lobby":
         state = lobby(state, screen, display)
-    elif state[0:5] == "level":
+    elif state[:5] == "level":
         state, level = game_loop(state, screen, display)
-    elif state == "main menu":
-        state = main_menu(state, screen, display)
     elif state == "win":
         state = win(state, screen, display)
     elif state == "game over":

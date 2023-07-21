@@ -34,7 +34,7 @@ class Entity:
             dy = -math.sin(math.radians(self.knockback_angle - 90))
             self.rect.x += dx * self.immune_timer * dt
             self.rect.y += dy * self.immune_timer * dt
-        dungeon.collide(self, rooms)
+        dungeon.collide(self, rooms, dt)
 
     def draw(self, screen, scroll):
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):

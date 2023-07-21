@@ -133,7 +133,6 @@ cam_movement = [0, 0]
 
 rooms = []
 items = []
-current_item = "Room"
 level = 0
 level_enter_level = 0
 s = 0
@@ -141,7 +140,17 @@ s = 0
 pressed = False
 
 clock = pygame.time.Clock()
-buttons = [ui.Button("Room", 1130, 200, 200, 25), ui.Button("Corridor", 1130, 250, 200, 25), ui.Button("Chest", 1130, 300, 200, 25), ui.Button("Zombie", 1130, 350, 200, 25), ui.Button("End", 1130, 400, 200, 25), ui.Button("Level Enter", 1130, 450, 200, 25), ui.Button("Lock", 1130, 500, 200, 25)]
+
+rooms_button = ui.Button("Rooms", 1130, 200, 200, 25)
+enemies_button = ui.Button("Enemies", 1130, 300, 200, 25)
+items_button = ui.Button("Items", 1130, 400, 200, 25)
+
+rooms_list = ["dungeon", "corridor"]
+enemies_list = ["zombie"]
+items_list = ["chest", "end", "lock", "level enter"]
+
+current_list = rooms_list
+current_item = 0
 
 lock_prompt = ui.PromptBox("What is the key?")
 lock_prompt.prompted = True
@@ -179,7 +188,7 @@ while running:
                     if isinstance(item, dungeon.Chest) and item.rect.collidepoint((pygame.mouse.get_pos()[0] + scroll[0], pygame.mouse.get_pos()[1] + scroll[1])):
                         running = not open_inventory(item, screen)
 
-            if current_item == "Level Enter":
+            if current_list[current_item] == "level enter":
                 if event.key == pygame.K_1:
                     level_enter_level = 1
                 elif event.key == pygame.K_2:
@@ -246,46 +255,64 @@ while running:
             if event.key in [pygame.K_UP, pygame.K_DOWN]:
                 cam_movement[1] = 0
 
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:
+                if len(current_list) - 1 == current_item:
+                    current_item = 0
+                else:
+                    current_item += 1
+            else:
+                if current_item == 0:
+                    current_item = len(current_list) - 1
+                else:
+                    current_item -= 1
+
     if pygame.mouse.get_pos()[0] <= 980 and lock_prompt.prompted:
         if pygame.mouse.get_pressed()[0]:
             s = 0
             if not pressed:
                 pressed = True
-                if current_item == "Room":
+                if current_list[current_item] == "dungeon":
                     rooms.append(dungeon.DungeonRoom(round((pygame.mouse.get_pos()[
                                 0] + scroll[0] - 512) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 512) / 32) * 32))
-                elif current_item == "Corridor":
+                elif current_list[current_item] == "corridor":
                     rooms.append(dungeon.Corridor(round((pygame.mouse.get_pos()[
                                 0] + scroll[0] - 128) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 64) / 32) * 32))
-                elif current_item == "Chest":
+                elif current_list[current_item] == "zombie":
+                    items.append(enemy.Zombie(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
+                elif current_list[current_item] == "chest":
                     items.append(dungeon.Chest(round((pygame.mouse.get_pos()[
                                 0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
-                elif current_item == "Zombie":
-                    items.append(enemy.Zombie(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
-                elif current_item == "End":
+                elif current_list[current_item] == "end":
                     items.append(dungeon.End(round((pygame.mouse.get_pos()[0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 64) / 32) * 32))
-                elif current_item == "Level Enter":
+                elif current_list[current_item] == "level enter":
                     items.append(dungeon.LevelEnter(round((pygame.mouse.get_pos()[0] + scroll[0] - 128) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 64) / 32) * 32, level_enter_level))
-                elif current_item == "Lock":
+                elif current_list[current_item] == "lock":
                     pos = pygame.mouse.get_pos()
                     lock_prompt.prompt()
         else:
 
-            if current_item == "Room":
+            if current_list[current_item] == "dungeon":
                 s = pygame.surface.Surface((1024, 1024))
-            elif current_item == "Corridor":
+                dungeon.DungeonRoom(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "corridor":
                 s = pygame.surface.Surface((256, 128))
-            elif current_item == "Chest":
-                s = pygame.surface.Surface((128, 64))
-            elif current_item == "Zombie":
+                dungeon.Corridor(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "zombie":
                 s = pygame.surface.Surface((64, 64))
-            elif current_item == "End":
+                enemy.Zombie(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "chest":
+                s = pygame.surface.Surface((128, 64))
+                dungeon.Chest(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "end":
                 s = pygame.surface.Surface((128, 128))
-            elif current_item == "Level Enter":
+                dungeon.End(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "level enter":
                 s = pygame.surface.Surface((256, 128))
-            elif current_item == "Lock":
+                dungeon.LevelEnter(0, 0, "").draw(s, [0, 0])
+            elif current_list[current_item] == "lock":
                 s = pygame.surface.Surface((256, 64))
-            s.fill((0, 0, 0))
+                dungeon.Lock(0, 0, None).draw(s, [0, 0])
             s.set_alpha(128)
 
 
@@ -337,12 +364,18 @@ while running:
                          scroll[1] % 32), (980, i * 32 - scroll[1] % 32))
     pygame.draw.rect(screen, (0, 0, 0), (980, 0, 300, 720))
 
-    for button in buttons:
-        if button.draw(screen):
-            current_item = button.text
+    if rooms_button.draw(screen):
+        current_list = rooms_list
+        current_item = 0
+    elif items_button.draw(screen):
+        current_list = items_list
+        current_item = 0
+    elif enemies_button.draw(screen):
+        current_list = enemies_list
+        current_item = 0
 
     output = lock_prompt.draw(screen)
-    if output and current_item == "Lock":
+    if output:
         lock_prompt.prompted = True
         lock_item = dungeon.Lock(round(((pos[0] + scroll[0]) - (256 / 2)) / 32) * 32,
                                  round(((pos[1] + scroll[1]) - (64 / 2)) / 32) * 32,

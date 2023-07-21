@@ -2,6 +2,7 @@ import random
 import pygame
 
 import assets.scripts.ui as ui
+import assets.scripts.tile as tile
 import assets.scripts.inventory as inventory
 
 
@@ -9,14 +10,16 @@ class Room:
     def __init__(self, x, y, width, height, color):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
+        self.tiles = tile.TileManager(self.rect.copy())
 
-    def draw(self, screen, scroll, scale=1):
-        x = (self.rect.x * scale - scroll[0])
-        y = (self.rect.y * scale - scroll[1])
-        width = self.rect.width * scale
-        height = self.rect.height * scale
+    def draw(self, screen, scroll, surrounding_tiles):
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
+            x = (self.rect.x - scroll[0])
+            y = (self.rect.y - scroll[1])
+            width = self.rect.width
+            height = self.rect.height
             pygame.draw.rect(screen, self.color, (x, y, width, height))
+        self.tiles.draw(screen, scroll, surrounding_tiles)
 
 
 class DungeonRoom(Room):
@@ -122,20 +125,20 @@ def can_pass(player, current_room, rooms):
 
 
 # control player collision within room
-def collide(player, rooms):
+def collide(player, rooms, dt):
     for room in rooms:
         if player.rect.colliderect(room):
             pu, pd, pl, pr = can_pass(player, room, rooms)
-            if not pl and player.rect.left <= room.rect.left + 5:
+            if ((not pl) or dt > 4) and player.rect.left <= room.rect.left + 5:
                 player.rect.left = room.rect.left + 11
                 player.movement[0] = 0
-            elif not pr and player.rect.right >= room.rect.right - 5:
+            elif ((not pr) or dt > 4) and player.rect.right >= room.rect.right - 5:
                 player.rect.left = room.rect.right - player.rect.width - 11
                 player.movement[0] = 0
 
-            if not pu and player.rect.top < room.rect.top + 5:
+            if ((not pu) or dt > 4) and player.rect.top < room.rect.top + 5:
                 player.rect.top = room.rect.top + 11
                 player.movement[1] = 0
-            elif not pd and player.rect.bottom >= room.rect.bottom - 5:
+            elif ((not pd) or dt > 4) and player.rect.bottom >= room.rect.bottom - 5:
                 player.rect.top = room.rect.bottom - player.rect.height - 11
                 player.movement[1] = 0
