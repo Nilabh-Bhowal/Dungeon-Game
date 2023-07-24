@@ -1,17 +1,12 @@
 import pygame
 import os
-import assets.scripts.dungeon as dungeon
+import assets.scripts.ui as ui
 
 pygame.init()
 
 screen = pygame.display.set_mode((800, 600))
 
-player = pygame.image.load("assets/images/entity/player.png")
-
-room = dungeon.Corridor(0, 0)
-room2 = dungeon.Corridor(256, 0)
-
-rooms = [room, room2]
+test = ui.KeybindChanger(400, 300, "UP", pygame.K_UP)
 
 running = True
 while running:
@@ -19,9 +14,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    room.draw(screen, [0, 0], rooms)
-    room2.draw(screen, [0, 0], rooms)
-    screen.blit(player, (0, 0))
+        test.handle_input(event, pygame.mouse.get_pos())
+    test.draw(screen)
     pygame.display.update()
 
 pygame.quit()

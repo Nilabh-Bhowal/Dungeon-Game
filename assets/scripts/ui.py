@@ -2,7 +2,7 @@ import pygame
 
 
 def title(text, x, y, screen):
-    font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 40)
+    font = pygame.font.Font("assets/fonts/PressStart2P.ttf", 40)
     text = font.render(text, True, (0, 0, 0))
     text_rect = text.get_rect()
     screen.blit(text, (x - text_rect.width // 2, y - text_rect.height // 2))
@@ -16,14 +16,16 @@ class Button:
         self.rect.centerx = x
         self.rect.centery = y
         self.clicked = True
+        self.click_sound = pygame.mixer.Sound("assets/sounds/effects/click.wav")
 
-    def draw(self, screen):
-        mouse_pos = pygame.mouse.get_pos()
+    def draw(self, screen, volume, scaled_mouse_pos):
         mouse_pressed = pygame.mouse.get_pressed()[0]
 
-        if self.rect.collidepoint(mouse_pos):
+        if self.rect.collidepoint(scaled_mouse_pos):
             if mouse_pressed:
                 if not self.clicked:
+                    self.click_sound.set_volume(volume)
+                    self.click_sound.play()
                     return self.normal_draw(True, screen)
                 self.clicked = True
             else:
@@ -49,7 +51,7 @@ class Button:
         return(result)
 
     def draw_text(self, screen):
-        font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 20)
+        font = pygame.font.Font("assets/fonts/PressStart2P.ttf", 20)
         text = font.render(self.text, True, (0, 0, 0))
         text_rect = text.get_rect()
         screen.blit(
@@ -102,7 +104,7 @@ class PromptBox:
                 pygame.draw.rect(screen, (0, 0, 0), (self.text_box_rect.left + 5, self.text_box_rect.top + 5, 5, 40))
 
     def draw_text(self, screen, text, x, y, center=False):
-        font = pygame.font.Font("assets/fonts/PressStart2p.ttf", 40)
+        font = pygame.font.Font("assets/fonts/PressStart2P.ttf", 40)
         text = font.render(text, True, (0, 0, 0))
         if center:
             text_rect = text.get_rect()
@@ -110,3 +112,58 @@ class PromptBox:
         else:
             screen.blit(text, (x, y))
             return pygame.Rect(x, y, text.get_rect().width, text.get_rect().height)
+
+
+class Slider:
+    def __init__(self, x, y, text, value, scale):
+        self.rect = pygame.Rect(0, 0, 320, 50)
+        self.rect.center = [x, y]
+        self.text = text
+        self.value = value
+        self.scale = scale
+        self.dial = pygame.Rect(0, 0, 25, 25)
+        self.dial.center = [self.rect.left + 25 + (270 / self.scale * self.value), y]
+        self.clicked = False
+
+    def handle_input(self, scaled_mouse_pos):
+        self.clicked = bool(pygame.mouse.get_pressed()[0] and self.dial.collidepoint(scaled_mouse_pos[0], scaled_mouse_pos[1]))
+        if self.clicked:
+            if scaled_mouse_pos[0] - self.rect.left <= 50:
+                self.dial.centerx = max(scaled_mouse_pos[0], self.rect.left + 24)
+            else:
+                self.dial.centerx = min(scaled_mouse_pos[0], self.rect.right - 24)
+
+    def draw(self, screen, scaled_mouse_pos):
+        self.handle_input(scaled_mouse_pos)
+        pygame.draw.rect(screen, (200, 200, 200), self.rect)
+        scale = pygame.draw.line(screen, (0, 0, 0), (self.rect.left + 25, self.rect.centery), (self.rect.right - 25, self.rect.centery), 5)
+        pygame.draw.circle(screen, (120, 120, 120), self.dial.center, self.dial.width / 2)
+        self.value = int((self.dial.centerx - scale.x) / scale.width * self.scale)
+        return self.value
+
+
+class KeybindChanger:
+    def __init__(self, x, y, text, value):
+        self.rect = pygame.Rect(x, y, 1280, 50)
+        self.rect.center = ((x, y))
+        self.text = text
+        self.value = value
+        self.value_display = pygame.key.name(value)
+        self.active = False
+
+    def handle_input(self, event, scaled_mouse_pos):
+        if self.rect.collidepoint(scaled_mouse_pos) and pygame.mouse.get_pressed()[0]:
+            self.active = True
+
+        if self.active and event.type == pygame.KEYDOWN:
+            self.value = event.key
+            self.value_display = pygame.key.name(self.value)
+            self.active = False
+        return self.value
+
+    def draw(self, screen):
+        if self.active:
+            pygame.draw.rect(screen, (250, 250, 250), self.rect)
+        else:
+            pygame.draw.rect(screen, (210, 210, 210), self.rect)
+        title(f"{self.text}      {self.value_display}", self.rect.centerx, self.rect.centery, screen)

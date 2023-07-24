@@ -36,8 +36,7 @@ class ParticleEmitter:
             dy = math.sin(angle)
             draw_x = x + random.randint(-16, 16)
             draw_y = y + random.randint(-16, 16)
-            draw_shrink = shrink + random.uniform(-5, 5)
-            self.particles.append(Particle(draw_x, draw_y, color, size, dx, dy, speed, draw_shrink))
+            self.particles.append(Particle(draw_x, draw_y, color, size, dx, dy, speed, shrink))
 
     def update(self, dt):
         particles_to_remove = []

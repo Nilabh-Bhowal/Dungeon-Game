@@ -1,5 +1,6 @@
 import random
 import pygame
+import asyncio
 import json
 import time
 import sys
@@ -17,11 +18,18 @@ pygame.init()
 pygame.mixer.init()
 pygame.display.init()
 
+display_x = 1280
+display_y = 720
+
+volume = 1.0
+
+controls = {"up": pygame.K_w, "down": pygame.K_s, "left": pygame.K_a, "right": pygame.K_d, "inventory": pygame.K_e}
+
 # create window
 display = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Goofy Ahh Dungeon Game")
 pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png").convert())
-screen = pygame.Surface((1280, 720))
+screen = pygame.Surface((display_x, display_y))
 
 
 
@@ -66,7 +74,6 @@ def main_menu(state, screen, display):
     quit_button = ui.Button("Quit", 640, 510, 500, 100)
 
     cursor = pygame.image.load("assets/images/cursor.png")
-    click = pygame.mixer.Sound("assets/sounds/effects/click.wav")
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
 
@@ -77,22 +84,198 @@ def main_menu(state, screen, display):
             if event.type == pygame.QUIT:
                 state = "quit"
 
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
         screen.fill((255, 100, 100))
         ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
-        if play_button.draw(screen):
+        if play_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
-            click.play()
-        if quit_button.draw(screen):
+        if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "quit"
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
 
     return state
 
+
+def settings_menu(screen, display):
+    return_button = ui.Button("Return", 640, 360, 500, 50)
+    volume_button = ui.Button("Volume", 640, 435, 500, 50)
+    size_button = ui.Button("Size", 640, 510, 500, 50)
+    controls_button = ui.Button("Controls", 640, 585, 500, 50)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    in_settings = True
+    quitted = False
+    while in_settings:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                in_settings = False
+                quitted = True
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
+        screen.fill((255, 100, 100))
+        ui.title("Settings",  640, 200, screen)
+        if return_button.draw(screen, volume, scaled_mouse_pos):
+            in_settings = False
+        if volume_button.draw(screen, volume, scaled_mouse_pos):
+            volume_menu(screen, display)
+        if size_button.draw(screen, volume, scaled_mouse_pos):
+            size_menu(screen)
+        if controls_button.draw(screen, volume, scaled_mouse_pos):
+            controls_menu(screen, display)
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if quitted:
+        quit()
+
+
+def volume_menu(screen, display):
+    global volume
+    return_button = ui.Button("Return", 640, 360, 500, 50)
+
+    volume_slider = ui.Slider(640, 435, "idk", volume * 100, 100)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    in_menu = True
+    quitted = False
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                in_menu = False
+                quitted = True
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
+        screen.fill((255, 100, 100))
+        ui.title("Volume",  640, 200, screen)
+        if return_button.draw(screen, volume, scaled_mouse_pos):
+            in_menu = False
+        volume = volume_slider.draw(screen, scaled_mouse_pos) / 100
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if quitted:
+        quit()
+
+def size_menu(screen):
+    global display, display_x, display_y
+    return_button = ui.Button("Return", 640, 360, 500, 50)
+    small_button = ui.Button("Small", 640, 435, 500, 50)
+    medium_button = ui.Button("Medium", 640, 510, 500, 50)
+    large_button = ui.Button("Large", 640, 585, 500, 50)
+    full_button = ui.Button("Fullscreen", 640, 660, 500, 50)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    in_menu = True
+    quitted = False
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                in_menu = False
+                quitted = True
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
+        screen.fill((255, 100, 100))
+        ui.title("Settings",  640, 200, screen)
+        if return_button.draw(screen, volume, scaled_mouse_pos):
+            in_menu = False
+        if small_button.draw(screen, volume, scaled_mouse_pos):
+            display_x = 640
+            display_y = 360
+            display = pygame.display.set_mode((display_x, display_y))
+        if medium_button.draw(screen, volume, scaled_mouse_pos):
+            display_x = 1280
+            display_y = 720
+            display = pygame.display.set_mode((display_x, display_y))
+        if large_button.draw(screen, volume, scaled_mouse_pos):
+            display_x = 1920
+            display_y = 1080
+            display = pygame.display.set_mode((display_x, display_y))
+        if full_button.draw(screen, volume, scaled_mouse_pos):
+            display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            display_x = display.get_width()
+            display_y = display.get_height()
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if quitted:
+        quit()
+
+def controls_menu(screen, display):
+    global controls
+    return_button = ui.Button("Return", 640, 360, 500, 50)
+
+    keybind_options = [
+        ui.KeybindChanger(640, 435 + y * 60, control, controls[control])
+        for y, control in enumerate(controls.keys())
+    ]
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    in_menu = True
+    quitted = False
+    while in_menu:
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                in_menu = False
+                quitted = True
+            for keybind in keybind_options:
+                controls[keybind.text] = keybind.handle_input(event, scaled_mouse_pos)
+                print(controls)
+        screen.fill((255, 100, 100))
+        ui.title("Settings",  640, 200, screen)
+        if return_button.draw(screen, volume, scaled_mouse_pos):
+            in_menu = False
+        for keybind in keybind_options:
+            keybind.draw(screen)
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if quitted:
+        quit()
 
 def game_over(state, level, screen, display):
     play_button = ui.Button("Restart", 640, 360, 400, 75)
@@ -110,17 +293,19 @@ def game_over(state, level, screen, display):
             if event.type == pygame.QUIT:
                 state = "quit"
 
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
         screen.fill((255, 100, 100))
         ui.title("You Ded",  640, 200, screen)
-        if play_button.draw(screen):
+        if play_button.draw(screen, volume, scaled_mouse_pos):
             state = f"level {level}"
-        if lobby_button.draw(screen):
+        if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
-        if quit_button.draw(screen):
+        if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "quit"
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
@@ -130,8 +315,8 @@ def game_over(state, level, screen, display):
 
 def win(state, screen, display):
     global keys
-    lobby_button = ui.Button("Continue", 640, 360, 400, 75)
-    quit_button = ui.Button("Quit", 640, 460, 400, 75)
+    lobby_button = ui.Button("Continue", 640, 360, 400, 50)
+    quit_button = ui.Button("Quit", 640, 435, 400, 50)
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -144,15 +329,17 @@ def win(state, screen, display):
             if event.type == pygame.QUIT:
                 state = "quit"
 
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
         screen.fill((255, 100, 100))
         ui.title("levil complet",  640, 200, screen)
-        if lobby_button.draw(screen):
+        if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
-        if quit_button.draw(screen):
+        if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "quit"
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
@@ -161,10 +348,10 @@ def win(state, screen, display):
 
 
 def paused(state, screen, display, level):
-    play_button = ui.Button("Continue", 640, 360, 400, 75)
-    restart_button = ui.Button("Restart", 640, 460, 400, 75)
-    lobby_button = ui.Button("Return To Lobby", 640, 560, 400, 75)
-    quit_button = ui.Button("Quit", 640, 660, 400, 75)
+    play_button = ui.Button("Continue", 640, 360, 400, 50)
+    restart_button = ui.Button("Restart", 640, 435, 400, 50)
+    settings_button = ui.Button("Settings", 640, 510, 400, 50)
+    quit_button = ui.Button("Exit", 640, 585, 400, 50)
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -180,26 +367,28 @@ def paused(state, screen, display, level):
                 state = "quit"
                 pause = False
 
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
         screen.fill((255, 100, 100))
         ui.title("Paused",  640, 200, screen)
-        if play_button.draw(screen):
+        if play_button.draw(screen, volume, scaled_mouse_pos):
             pause = False
-        if restart_button.draw(screen):
+        if restart_button.draw(screen, volume, scaled_mouse_pos):
             state = f"level {level}"
             pause = False
             restart = True
-        if lobby_button.draw(screen):
+        if settings_button.draw(screen, volume, scaled_mouse_pos):
+            settings_menu(screen, display)
+        if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
             pause = False
-        if quit_button.draw(screen):
-            state = "quit"
-            pause = False
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
+
     return state, restart
 
 
@@ -216,14 +405,16 @@ def open_inventory(screen, display, inventory):
             if event.type == pygame.QUIT:
                 quit()
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+            if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
                 inventory_open = False
 
-        screen.fill((255, 100, 100))
-        inventory.draw(screen)
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        screen.fill((255, 100, 100))
+        inventory.draw(screen, scaled_mouse_pos)
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
         clock.tick(60)
 
@@ -236,6 +427,7 @@ def open_chest(screen, display, inventory, items):
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
 
+
     clock = pygame.time.Clock()
     while inventory_open:
 
@@ -243,16 +435,18 @@ def open_chest(screen, display, inventory, items):
             if event.type == pygame.QUIT:
                 quit()
 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+            if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
                 inventory_open = False
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((255, 100, 100))
         inventory.draw_hotbar(screen)
-        item_carrying = inventory.handle_hotbar_mouse_interaction(item_carrying)
-        item_carrying = items.draw(item_carrying, screen)
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        item_carrying = inventory.handle_hotbar_mouse_interaction(item_carrying, scaled_mouse_pos, True)
+        item_carrying = items.draw(item_carrying, screen, scaled_mouse_pos)
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
         clock.tick(60)
 
@@ -266,13 +460,18 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
     a = 0
     fade_surf = pygame.Surface((1280, 720))
     fade = False
-    pygame.mouse.set_visible(False)
+
+    pause_button = ui.Button("II", 20, 20, 32, 32)
 
     # load level from file
     rooms, _, enemies, _, level_enters, locks = load_level(0)
+    for room in rooms:
+        room.tiles.load_rooms(rooms)
 
     # initialize objects
     player = Player(state, keys)
@@ -295,27 +494,20 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
-        player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
-        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
-        if key_pressed[pygame.K_SPACE]:
-            if isinstance(player.active_item, weapon.Sword) and (player.active_item.mode == "held" and not pressed):
-                player.active_item.mode = "attack"
-                pressed = True
-        else:
-            pressed = False
-
+        player.movement[0] = key_pressed[controls["right"]] - key_pressed[controls["left"]]
+        player.movement[1] = key_pressed[controls["down"]] - key_pressed[controls["up"]]
 
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
                         - true_scroll[0]) / 25 * dt
         true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
                         - true_scroll[1]) / 25 * dt
-        scroll = true_scroll.copy()
-        scroll[0] = int(scroll[0])
-        scroll[1] = int(scroll[1])
+        scroll = [int(true_scroll[0]), int(true_scroll[1])]
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         # moves objects
-        player.move(dt, rooms, enemies, scroll)
+        player.move(dt, rooms, enemies, scroll, scaled_mouse_pos)
         for lock in locks:
             lock.check_collision(player)
         if not fade:
@@ -344,16 +536,19 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         player.draw(screen, scroll)
 
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
+        if pause_button.draw(screen, volume, scaled_mouse_pos):
+            state, restart = paused(state, screen, display, level)
+            pt = time.time()
 
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         screen.blit(fade_surf, (0, 0))
 
         # updates display
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         # ensures everything is running smoothly
-        clock.tick(5)
+        clock.tick(60)
         now = time.time()
         dt = (now - pt) * 60
         dt = min(dt, 4)
@@ -369,6 +564,8 @@ def game_loop(state, screen, display):
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
 
+    pause_button = ui.Button("II", 20, 20, 32, 32)
+
     fade = False
     a = 0
     fade_surf = pygame.Surface((1280, 720))
@@ -378,6 +575,8 @@ def game_loop(state, screen, display):
 
     # load level from file
     rooms, chests, enemies, end, _, locks = load_level(level)
+    for room in rooms:
+        room.tiles.load_rooms(rooms)
 
     # initialize objects
     player = Player(state, keys)
@@ -400,26 +599,24 @@ def game_loop(state, screen, display):
             if event.type == pygame.QUIT:
                 state = "quit"
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_e:
+            if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
+                collide_chest = False
+                for chest in chests:
+                    if player.rect.colliderect(chest.rect):
+                        collide_chest = True
+                if collide_chest:
+                    player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
+                else:
                     open_inventory(screen, display, player.inventory)
-                    pt = time.time()
-                elif event.key == pygame.K_p:
-                    state, restart = paused(state, screen, display, level)
-                    pt = time.time()
-                elif event.key == pygame.K_q:
-                    for chest in chests:
-                        if player.rect.colliderect(chest.rect):
-                            player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
-                            pt = time.time()
+                pt = time.time()
 
             if event.type == pygame.MOUSEBUTTONDOWN and issubclass(type(player.active_item), weapon.Weapon) and (player.active_item.mode == "held"):
                 player.active_item.mode = "attack"
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
-        player.movement[0] = (key_pressed[pygame.K_RIGHT] or key_pressed[pygame.K_d]) - (key_pressed[pygame.K_LEFT] or key_pressed[pygame.K_a])
-        player.movement[1] = (key_pressed[pygame.K_DOWN] or key_pressed[pygame.K_s]) - (key_pressed[pygame.K_UP] or key_pressed[pygame.K_w])
+        player.movement[0] = key_pressed[controls["right"]] - key_pressed[controls["left"]]
+        player.movement[1] = key_pressed[controls["down"]] - key_pressed[controls["up"]]
 
         if key_pressed[pygame.K_1]:
             player.inventory.active_slot = 0
@@ -457,8 +654,10 @@ def game_loop(state, screen, display):
 
         scroll = [int(true_scroll[0]), int(true_scroll[1])]
 
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
         # moves objects
-        player.move(dt, rooms, enemies, scroll)
+        player.move(dt, rooms, enemies, scroll, scaled_mouse_pos)
         for lock in locks:
             lock.check_collision(player)
         death_particles.update(dt)
@@ -466,7 +665,7 @@ def game_loop(state, screen, display):
         for i, enemy in enumerate(enemies):
             if enemy.health <= 0:
                 removed_enemies.append(i)
-                death_particles.add_burst(enemy.rect.centerx, enemy.rect.centery, (200, 200, 200), 20, 5, 0.5, 10000)
+                death_particles.add_burst(enemy.rect.centerx, enemy.rect.centery, (200, 200, 200), 20, 5, 0.5, 500)
             enemy.move(player, dt, rooms)
         for i in reversed(removed_enemies):
             enemies.pop(i)
@@ -501,7 +700,10 @@ def game_loop(state, screen, display):
         player.inventory.draw_hotbar(screen)
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
-        screen.blit(cursor, (pygame.mouse.get_pos()[0] - 16, pygame.mouse.get_pos()[1] - 16))
+        if pause_button.draw(screen, volume, scaled_mouse_pos):
+            state, restart = paused(state, screen, display, level)
+            pt = time.time()
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
 
         fade_surf.set_alpha(a)
@@ -509,7 +711,7 @@ def game_loop(state, screen, display):
         screen.blit(fade_surf, (0, 0))
 
         # updates display
-        display.blit(pygame.transform.scale(screen, (1280, 720)), (0, 0))
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         # ensures everything is running smoothly

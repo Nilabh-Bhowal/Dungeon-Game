@@ -1,4 +1,3 @@
-import random
 import pygame
 
 import assets.scripts.ui as ui
@@ -7,32 +6,36 @@ import assets.scripts.inventory as inventory
 
 
 class Room:
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.tiles = tile.TileManager(self.rect.copy())
+
+    def draw(self, screen, scroll):
+        if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
+            self.tiles.draw(screen, scroll)
+
+
+class Item:
     def __init__(self, x, y, width, height, color):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
-        self.tiles = tile.TileManager(self.rect.copy())
 
-    def draw(self, screen, scroll, surrounding_tiles):
+    def draw(self, screen, scroll):
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
-            x = (self.rect.x - scroll[0])
-            y = (self.rect.y - scroll[1])
-            width = self.rect.width
-            height = self.rect.height
-            pygame.draw.rect(screen, self.color, (x, y, width, height))
-        self.tiles.draw(screen, scroll, surrounding_tiles)
+            pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 class DungeonRoom(Room):
     def __init__(self, x, y):
-        super().__init__(x, y, 1024, 1024, (50, 0, 205))
+        super().__init__(x, y, 1024, 1024)
 
 
 class Corridor(Room):
     def __init__(self, x, y):
-        super().__init__(x, y, 256, 128, (50, 0, 205))
+        super().__init__(x, y, 256, 128)
 
 
-class Chest(Room):
+class Chest(Item):
     def __init__(self, x, y, storage=None):
         super().__init__(x, y, 128, 64, (255, 175, 112))
         self.items = inventory.ChestStorage()
@@ -45,12 +48,12 @@ class Chest(Room):
         return self.items.draw(item_carrying, screen)
 
 
-class End(Room):
+class End(Item):
     def __init__(self, x, y):
         super().__init__(x, y, 128, 128, (255, 255, 0))
 
 
-class LevelEnter(Room):
+class LevelEnter(Item):
     def __init__(self, x, y, level):
         super().__init__(x, y, 256, 128, (255, 100, 0))
         self.level = level
@@ -58,12 +61,12 @@ class LevelEnter(Room):
     def check_collision(self, player):
         return self.level if player.rect.colliderect(self.rect) else None
 
-    def draw(self, screen, scroll, scale=1):
-        super().draw(screen, scroll, scale)
-        ui.title(str(self.level), self.rect.centerx * scale - scroll[0], self.rect.centery * scale - scroll[1], screen)
+    def draw(self, screen, scroll):
+        super().draw(screen, scroll)
+        ui.title(str(self.level), self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
 
 
-class Lock(Room):
+class Lock(Item):
     def __init__(self, x, y, key):
         super().__init__(x, y, 256, 64, (255, 0, 0))
         self.key = key
@@ -126,19 +129,25 @@ def can_pass(player, current_room, rooms):
 
 # control player collision within room
 def collide(player, rooms, dt):
+    collided = False
     for room in rooms:
         if player.rect.colliderect(room):
             pu, pd, pl, pr = can_pass(player, room, rooms)
             if ((not pl) or dt > 4) and player.rect.left <= room.rect.left + 5:
                 player.rect.left = room.rect.left + 11
                 player.movement[0] = 0
+                collided = True
             elif ((not pr) or dt > 4) and player.rect.right >= room.rect.right - 5:
                 player.rect.left = room.rect.right - player.rect.width - 11
                 player.movement[0] = 0
+                collided = True
 
             if ((not pu) or dt > 4) and player.rect.top < room.rect.top + 5:
                 player.rect.top = room.rect.top + 11
                 player.movement[1] = 0
+                collided = True
             elif ((not pd) or dt > 4) and player.rect.bottom >= room.rect.bottom - 5:
                 player.rect.top = room.rect.bottom - player.rect.height - 11
                 player.movement[1] = 0
+                collided = True
+    return collided

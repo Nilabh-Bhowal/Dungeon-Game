@@ -22,10 +22,10 @@ class Player(entity.Entity):
         self.item_picked_up = "empty"
         self.keys = keys
 
-    def move(self, dt, rooms, enemies, scroll):
+    def move(self, dt, rooms, enemies, scroll, scaled_mouse_pos):
         super().move(dt, rooms)
-        dx = pygame.mouse.get_pos()[0] - (self.rect.centerx - scroll[0])
-        dy = pygame.mouse.get_pos()[1] - (self.rect.centery - scroll[1])
+        dx = scaled_mouse_pos[0] - (self.rect.centerx - scroll[0])
+        dy = scaled_mouse_pos[1] - (self.rect.centery - scroll[1])
         self.angle = -math.degrees(math.atan2(dy, dx)) + 90
         for item in self.inventory.hotbar:
             if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
@@ -36,7 +36,7 @@ class Player(entity.Entity):
                     self.keys.append(item[1])
         if self.switched:
             if self.inventory.hotbar[self.inventory.active_slot] == "sword":
-                self.active_item = weapon.Sword(self, 30, 64)
+                self.active_item = weapon.Sword(self, 30, 48)
             elif self.inventory.hotbar[self.inventory.active_slot] == "bow":
                 self.active_item = weapon.Bow(self, 15, 20)
             else:
@@ -48,7 +48,7 @@ class Player(entity.Entity):
         if isinstance(self.active_item, weapon.Sword):
             self.attack = self.active_item.update(dt)
         elif isinstance(self.active_item, weapon.Bow):
-            self.active_item.update(pygame.mouse.get_pos()[0] + scroll[0], pygame.mouse.get_pos()[1] + scroll[1], enemies, dt)
+            self.active_item.update(scaled_mouse_pos[0] + scroll[0], scaled_mouse_pos[1] + scroll[1], enemies, dt, rooms)
 
     def check_damaged(self, enemies):
         if self.immune:
