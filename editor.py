@@ -7,6 +7,7 @@ import assets.scripts.enemy as enemy
 import assets.scripts.ui as ui
 
 pygame.init()
+pygame.mixer.init()
 
 screen = pygame.display.set_mode((1280, 720))
 
@@ -14,23 +15,25 @@ def save(num, level, items):
     data = []
     for room in level:
         if isinstance(room, dungeon.DungeonRoom):
-            l = 0
+            l = "room"
         elif isinstance(room, dungeon.Corridor):
-            l = 1
+            l = "corridor"
 
         data.append({"type": l, "x": room.rect.x, "y": room.rect.y})
 
     for item in items:
         if isinstance(item, enemy.Zombie):
-            l = 3
+            l = "zombie"
+        if isinstance(item, enemy.Archer):
+            l = "archer"
         elif isinstance(item, dungeon.End):
-            l = 4
+            l = "end"
         if isinstance(item, dungeon.LevelEnter):
-            data.append({"type": 5, "x": item.rect.x, "y": item.rect.y, "level": item.level})
+            data.append({"type": "level enter", "x": item.rect.x, "y": item.rect.y, "level": item.level})
         elif isinstance(item, dungeon.Lock):
-            data.append({"type": 6, "x": item.rect.x, "y": item.rect.y, "key": str(item.key)})
+            data.append({"type": "lock", "x": item.rect.x, "y": item.rect.y, "key": str(item.key)})
         elif isinstance(item, dungeon.Chest):
-            data.append({"type": 2, "x": item.rect.x, "y": item.rect.y, "space": item.items.space})
+            data.append({"type": "chest", "x": item.rect.x, "y": item.rect.y, "space": item.items.space})
         else:
             data.append({"type": l, "x": item.rect.x, "y": item.rect.y})
 
@@ -44,19 +47,21 @@ def load(num):
     level = []
     things = []
     for item in data:
-        if item["type"] == 0:
+        if item["type"] == "room":
             level.append(dungeon.DungeonRoom(item["x"], item["y"]))
-        elif item["type"] == 1:
+        elif item["type"] == "corridor":
             level.append(dungeon.Corridor(item["x"], item["y"]))
-        elif item["type"] == 2:
+        elif item["type"] == "chest":
             things.append(dungeon.Chest(item["x"], item["y"], item["space"]))
-        elif item["type"] == 3:
+        elif item["type"] == "zombie":
             things.append(enemy.Zombie(item["x"], item["y"]))
-        elif item["type"] == 4:
+        elif item["type"] == "archer":
+            things.append(enemy.Archer(item["x"], item["y"]))
+        elif item["type"] == "end":
             things.append(dungeon.End(item["x"], item["y"]))
-        elif item["type"] == 5:
+        elif item["type"] == "level enter":
             things.append(dungeon.LevelEnter(item["x"], item["y"], item["level"]))
-        elif item["type"] == 6:
+        elif item["type"] == "lock":
             things.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
 
     return level, things
@@ -76,7 +81,7 @@ def check_collision(placed, level, scroll):
 def open_inventory(chest, screen):
     inventory_open = True
     quitted = False
-    items = ["sword", "key", "empty", "empty", "empty", "empty", "empty", "empty", "empty"]
+    items = ["sword", "bow", "key", "empty", "empty", "empty", "empty", "empty", "empty"]
     trash = pygame.Rect(1165, 600, 75, 75)
     key_prompt = ui.PromptBox("Which lock is this for?")
     key_prompt.prompted = True
@@ -96,9 +101,9 @@ def open_inventory(chest, screen):
         for spot, item in enumerate(items):
             rect = pygame.Rect(640 - 450 + spot * 100, 600, 75, 75)
             if mouse_pressed and (rect.collidepoint(mouse_pos) and item_carrying == "empty"):
-                if item == "sword":
+                if item != "key":
                     item_carrying = item
-                elif item == "key":
+                else:
                     key_prompt.prompt()
 
         if mouse_pressed and trash.collidepoint(mouse_pos):
@@ -114,8 +119,11 @@ def open_inventory(chest, screen):
 
             if item == "sword":
                 pygame.draw.rect(screen, (255, 255, 255), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
+            if item == "bow":
+                pygame.draw.rect(screen, (0, 255, 0), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
             if item == "key":
                 pygame.draw.rect(screen, (255, 0, 0), (640 - 450 + 22 + spot * 100, 600 + 22, 32, 32))
+
         s = pygame.surface.Surface((75, 75))
         s.set_alpha(200)
         s.fill((127, 127, 127))
@@ -126,6 +134,7 @@ def open_inventory(chest, screen):
             item_carrying = ["key", str(output)]
             key_prompt.input = ""
         pygame.display.update()
+    print(chest.items.space)
     return quitted
 
 scroll = [0, 0]
@@ -146,7 +155,7 @@ enemies_button = ui.Button("Enemies", 1130, 300, 200, 25)
 items_button = ui.Button("Items", 1130, 400, 200, 25)
 
 rooms_list = ["dungeon", "corridor"]
-enemies_list = ["zombie"]
+enemies_list = ["zombie", "archer"]
 items_list = ["chest", "end", "lock", "level enter"]
 
 current_list = rooms_list
@@ -280,6 +289,8 @@ while running:
                                 0] + scroll[0] - 128) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 64) / 32) * 32))
                 elif current_list[current_item] == "zombie":
                     items.append(enemy.Zombie(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
+                elif current_list[current_item] == "archer":
+                    items.append(enemy.Archer(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
                 elif current_list[current_item] == "chest":
                     items.append(dungeon.Chest(round((pygame.mouse.get_pos()[
                                 0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
@@ -294,13 +305,16 @@ while running:
 
             if current_list[current_item] == "dungeon":
                 s = pygame.surface.Surface((1024, 1024))
-                dungeon.DungeonRoom(0, 0).draw(s, [0, 0])
+                pygame.draw.rect(s, (0, 0, 255), (0, 0, 1024, 1024))
             elif current_list[current_item] == "corridor":
                 s = pygame.surface.Surface((256, 128))
-                dungeon.Corridor(0, 0).draw(s, [0, 0])
+                pygame.draw.rect(s, (0, 0, 255), (0, 0, 256, 228))
             elif current_list[current_item] == "zombie":
                 s = pygame.surface.Surface((64, 64))
                 enemy.Zombie(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "archer":
+                s = pygame.surface.Surface((64, 64))
+                enemy.Archer(0, 0).draw(s, [0, 0])
             elif current_list[current_item] == "chest":
                 s = pygame.surface.Surface((128, 64))
                 dungeon.Chest(0, 0).draw(s, [0, 0])
@@ -339,7 +353,7 @@ while running:
     screen.fill((255, 100, 100))
 
     for room in rooms:
-        room.draw(screen, scroll)
+        room.draw(screen, scroll, True)
     for item in items:
         if isinstance(item, dungeon.Lock):
             item.draw(screen, scroll, True)
@@ -364,13 +378,13 @@ while running:
                          scroll[1] % 32), (980, i * 32 - scroll[1] % 32))
     pygame.draw.rect(screen, (0, 0, 0), (980, 0, 300, 720))
 
-    if rooms_button.draw(screen):
+    if rooms_button.draw(screen, 0, pygame.mouse.get_pos()):
         current_list = rooms_list
         current_item = 0
-    elif items_button.draw(screen):
+    elif items_button.draw(screen, 0, pygame.mouse.get_pos()):
         current_list = items_list
         current_item = 0
-    elif enemies_button.draw(screen):
+    elif enemies_button.draw(screen, 0, pygame.mouse.get_pos()):
         current_list = enemies_list
         current_item = 0
 

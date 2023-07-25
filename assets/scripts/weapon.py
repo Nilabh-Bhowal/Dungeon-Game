@@ -1,7 +1,6 @@
 import pygame
 import math
 
-import assets.scripts.player as player
 import assets.scripts.dungeon as dungeon
 
 class Weapon:
@@ -51,6 +50,7 @@ class Sword(Weapon):
 class Bow(Weapon):
     def __init__(self, holder, damage, speed):
         super().__init__(holder, damage, 15, 5)
+        self.sound = pygame.mixer.Sound("assets/sounds/effects/shoot.wav")
         self.speed = speed
         self.arrows = []
 
@@ -60,9 +60,11 @@ class Bow(Weapon):
         return math.atan2(dy, dx)
 
 
-    def update(self, target_x, target_y, opponents, dt, rooms):
+    def update(self, target_x, target_y, opponents, dt, rooms, volume):
+        self.sound.set_volume(volume)
         angle = self.target(target_x, target_y)
         if self.mode == "attack":
+            self.sound.play()
             self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed))
             self.mode = "cooldown"
         arrows_to_remove = []
@@ -91,7 +93,7 @@ class Bow(Weapon):
 
 class Arrow:
     def __init__(self, x, y, angle, speed):
-        self.rect = pygame.Rect(x, y, 5, 5)
+        self.rect = pygame.Rect(x, y, 15, 15)
         self.speed = speed
         self.collided = False
         self.movement = [math.cos(angle), math.sin(angle)]

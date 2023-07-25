@@ -20,11 +20,9 @@ class Inventory:
                 rect = pygame.Rect(self.x - 450 + spot * 100, self.y - 500 + index * 100, 75, 75)
 
                 if mouse_pressed and rect.collidepoint(scaled_mouse_pos) and not self.pressed:
-                    print("a")
                     if self.item_carrying == "empty":
                         self.item_carrying, row[spot] = item, "empty"
                     elif row[spot] == "empty":
-                        print("a")
                         row[spot], self.item_carrying = self.item_carrying, "empty"
                     else:
                         row[spot], self.item_carrying = self.item_carrying, row[spot]

@@ -56,7 +56,7 @@ class Enemy(entity.Entity):
 
 class Zombie(Enemy):
     def __init__(self, x, y):
-        super().__init__(x, y, 64, 64, 4, 400, 70, "player.png")
+        super().__init__(x, y, 64, 64, 4, 550, 70, "player.png")
         self.weapon = weapon.Sword(self, 10, 16)
         self.attack = False
 
@@ -66,6 +66,28 @@ class Zombie(Enemy):
 
         super().move(player, dt, rooms)
         self.attack = self.weapon.update(dt)
+
+    def strike(self):
+        if self.weapon.mode == "held" and random.randint(0, 15) == 15:
+            self.weapon.mode = "attack"
+
+    def draw(self, screen, scroll):
+        self.weapon.draw(screen, scroll)
+        super().draw(screen, scroll)
+
+
+class Archer(Enemy):
+    def __init__(self, x, y):
+        super().__init__(x, y, 64, 64, 4, 550, 70, "player.png")
+        self.weapon = weapon.Bow(self, 10, 15)
+        self.attack = False
+
+    def move(self, player, dt, rooms, volume):
+        if self.state == "target":
+            self.strike()
+
+        super().move(player, dt, rooms)
+        self.weapon.update(player.rect.centerx + random.randint(-32, 32), player.rect.centery + random.randint(-32, 32), [player], dt, rooms, volume)
 
     def strike(self):
         if self.weapon.mode == "held" and random.randint(0, 15) == 15:

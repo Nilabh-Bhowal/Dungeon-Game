@@ -10,9 +10,11 @@ class Room:
         self.rect = pygame.Rect(x, y, width, height)
         self.tiles = tile.TileManager(self.rect.copy())
 
-    def draw(self, screen, scroll):
+    def draw(self, screen, scroll, editor=False):
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
             self.tiles.draw(screen, scroll)
+            if editor:
+                pygame.draw.rect(screen, (0, 0, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 class Item:
@@ -45,7 +47,7 @@ class Chest(Item):
         self.empty = False
 
     def draw_storage(self, item_carrying, screen):
-        return self.items.draw(item_carrying, screen)
+        return self.items.draw(item_carrying, screen, pygame.mouse.get_pos())
 
 
 class End(Item):
@@ -74,6 +76,9 @@ class Lock(Item):
 
     def check_collision(self, player):
         if not self.unlocked and self.rect.colliderect(player):
+            if isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key):
+                self.unlocked = True
+                return True
             if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
                 player.rect.top = self.rect.bottom + 11
                 player.movement[1] = 0
@@ -93,7 +98,7 @@ class Lock(Item):
 
 
         for item in player.keys:
-            if item == self.key:
+            if item == self.key and item[1] == "0":
                 self.unlocked = True
 
     def draw(self, screen, scroll, editor=False):

@@ -1,4 +1,3 @@
-import pygame
 import math
 
 import assets.scripts.entity as entity
@@ -22,7 +21,7 @@ class Player(entity.Entity):
         self.item_picked_up = "empty"
         self.keys = keys
 
-    def move(self, dt, rooms, enemies, scroll, scaled_mouse_pos):
+    def move(self, dt, rooms, enemies, scroll, scaled_mouse_pos, volume):
         super().move(dt, rooms)
         dx = scaled_mouse_pos[0] - (self.rect.centerx - scroll[0])
         dy = scaled_mouse_pos[1] - (self.rect.centery - scroll[1])
@@ -48,7 +47,7 @@ class Player(entity.Entity):
         if isinstance(self.active_item, weapon.Sword):
             self.attack = self.active_item.update(dt)
         elif isinstance(self.active_item, weapon.Bow):
-            self.active_item.update(scaled_mouse_pos[0] + scroll[0], scaled_mouse_pos[1] + scroll[1], enemies, dt, rooms)
+            self.active_item.update(scaled_mouse_pos[0] + scroll[0], scaled_mouse_pos[1] + scroll[1], enemies, dt, rooms, volume)
 
     def check_damaged(self, enemies):
         if self.immune:
