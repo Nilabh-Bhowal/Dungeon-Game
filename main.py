@@ -87,7 +87,7 @@ def main_menu(state, screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
@@ -125,7 +125,7 @@ def settings_menu(screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Settings",  640, 200, screen)
         if return_button.draw(screen, volume, scaled_mouse_pos):
             in_settings = False
@@ -168,7 +168,7 @@ def volume_menu(screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Volume",  640, 200, screen)
         if return_button.draw(screen, volume, scaled_mouse_pos):
             in_menu = False
@@ -210,7 +210,7 @@ def size_menu(screen):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Settings",  640, 200, screen)
         if return_button.draw(screen, volume, scaled_mouse_pos):
             in_menu = False
@@ -267,14 +267,8 @@ def controls_menu(screen, display):
             if event.type == pygame.QUIT:
                 in_menu = False
                 quitted = True
-            for keybind in keybind_options:
-                can_change = True
-                for key in controls.keys():
-                    if keybind.handle_input(event, scaled_mouse_pos) == key:
-                        can_change = False
-                if can_change:
-                    controls[keybind.text] = keybind.handle_input(event, scaled_mouse_pos)
-        screen.fill((255, 100, 100))
+            controls[keybind.text] = keybind.handle_input(event, scaled_mouse_pos)
+        screen.fill((96, 178, 124))
         ui.title("Settings",  640, 200, screen)
         if return_button.draw(screen, volume, scaled_mouse_pos):
             in_menu = False
@@ -308,7 +302,7 @@ def game_over(state, level, screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("You Ded",  640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             state = f"level {level}"
@@ -344,7 +338,7 @@ def win(state, screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("levil complet",  640, 200, screen)
         if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
@@ -381,7 +375,7 @@ def paused(state, screen, display, level):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Paused",  640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             pause = False
@@ -423,7 +417,7 @@ def lobby_pause(state, screen, display):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         ui.title("Paused",  640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             pause = False
@@ -460,7 +454,7 @@ def open_inventory(screen, display, inventory):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         inventory.draw(screen, scaled_mouse_pos)
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
@@ -490,7 +484,7 @@ def open_chest(screen, display, inventory, items):
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         inventory.draw_hotbar(screen)
         item_carrying = inventory.handle_hotbar_mouse_interaction(item_carrying, scaled_mouse_pos, True)
         item_carrying = items.draw(item_carrying, screen, scaled_mouse_pos)
@@ -574,7 +568,7 @@ def lobby(state, screen, display):  # sourcery skip: low-code-quality
         # draws to the screen
         fade_surf.set_alpha(a)
         fade_surf.fill((255, 255, 255))
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         for room in rooms:
             room.draw(screen, scroll)
         for level_enter in level_enters:
@@ -751,7 +745,7 @@ def game_loop(state, screen, display):
 
 
         # draws to the screen
-        screen.fill((255, 100, 100))
+        screen.fill((96, 178, 124))
         for room in rooms:
             room.draw(screen, scroll)
         for chest in chests:
@@ -769,7 +763,7 @@ def game_loop(state, screen, display):
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         if pause_button.draw(screen, volume, scaled_mouse_pos):
-            state, restart = paused(state, screen, display, level)
+            state = paused(state, screen, display, level)
             pt = time.time()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)

@@ -109,7 +109,7 @@ def open_inventory(chest, screen):
         if mouse_pressed and trash.collidepoint(mouse_pos):
             item_carrying = "empty"
 
-        screen.fill((255, 100, 100))
+        screen.fill((117, 201, 151))
         for spot, item in enumerate(items):
             s = pygame.surface.Surface((75, 75))
             s.set_alpha(200)
@@ -350,7 +350,7 @@ while running:
     scroll[0] += cam_movement[0] * 20
     scroll[1] += cam_movement[1] * 20
 
-    screen.fill((255, 100, 100))
+    screen.fill((117, 201, 151))
 
     for room in rooms:
         room.draw(screen, scroll, True)

@@ -2,18 +2,25 @@ import pygame
 import math
 
 import assets.scripts.dungeon as dungeon
+import assets.scripts.animation as animation
 
 class Weapon:
-    def __init__(self, holder, damage, reload_time, size):
+    def __init__(self, holder, damage, reload_time, size, img):
         self.holder = holder
         self.damage = damage
         self.mode = "held"
+        self.animation = animation.Animation(img)
         self.reload = reload_time
         self.timer = self.reload
         self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, size, size)
 
     def update(self, dt):
+        self.animation.update(dt)
         self.update_mode(dt)
+        if self.mode == "attack":
+            self.animation.change_animation("attack")
+        elif self.animation.current_animation == "attack":
+            self.animation.change_animation("idle")
         dx = (math.cos(math.radians(self.holder.angle - 90)))
         dy = -(math.sin(math.radians(self.holder.angle - 90)))
         self.rect.centerx = self.holder.rect.x + (dx * self.rect.width * 2)
@@ -34,9 +41,7 @@ class Weapon:
             self.timer = (self.reload) * dt
 
     def draw(self, screen, scroll):
-        draw_surf = pygame.Surface((self.rect.width, self.rect.height)).convert_alpha()
-        draw_surf.fill((255, 255, 255))
-        draw_surf = pygame.transform.rotate(draw_surf, self.holder.angle)
+        draw_surf = pygame.transform.rotate(self.animation.get_image(), self.holder.angle + 180)
         dx = (math.cos(math.radians(self.holder.angle - 90)))
         dy = -(math.sin(math.radians(self.holder.angle - 90)))
         screen.blit(draw_surf, ((self.holder.rect.centerx - scroll[0]) - (draw_surf.get_width() / 2) + (dx * (self.rect.width + 16)), (self.holder.rect.centery - scroll[1]) - (draw_surf.get_height() / 2) + (dy * (self.rect.height + 16))))
@@ -44,12 +49,12 @@ class Weapon:
 
 class Sword(Weapon):
     def __init__(self, holder, damage, size):
-        super().__init__(holder, damage, 15, size)
+        super().__init__(holder, damage, 15, size, "sword")
 
 
 class Bow(Weapon):
     def __init__(self, holder, damage, speed):
-        super().__init__(holder, damage, 15, 5)
+        super().__init__(holder, damage, 15, 5, "bow")
         self.sound = pygame.mixer.Sound("assets/sounds/effects/shoot.wav")
         self.speed = speed
         self.arrows = []

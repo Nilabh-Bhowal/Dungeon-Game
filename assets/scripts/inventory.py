@@ -1,7 +1,12 @@
 import pygame
+import os
 
 class Inventory:
     def __init__(self):
+        self.icons = {}
+        for icon in os.listdir("assets/images/inventory_icons"):
+            self.icons[icon.removesuffix(".png")] = pygame.transform.scale(pygame.image.load(f"assets/images/inventory_icons/{icon}"), (32, 32))
+        print(self.icons)
         self.space = [["empty" for _ in range(9)] for _ in range(3)]
         self.hotbar = ["empty" for _ in range(9)]
         self.active_slot = 0
@@ -52,13 +57,12 @@ class Inventory:
         self.draw_hotbar(screen)
         self.draw_inventory_space(screen)
 
-        if self.item_carrying == "sword":
-            pygame.draw.rect(screen, (255, 255, 255),
-                             (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
-        elif self.item_carrying == "bow":
-                    pygame.draw.rect(screen, (0, 255, 0), (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
-        if isinstance(self.item_carrying, list) and self.item_carrying[0] == "key":
-                    pygame.draw.rect(screen, (255, 0, 0), (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
+        if self.item_carrying != "empty":
+            if not isinstance(self.item_carrying, list):
+                screen.blit(self.icons[self.item_carrying], (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+            else:
+                key = self.item_carrying[0]
+                screen.blit(self.icons[key], (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
 
     def draw_hotbar(self, screen):
@@ -73,12 +77,12 @@ class Inventory:
             screen.blit(s, (self.x - 450 + spot * 100, self.y, 75, 75))
             pygame.draw.rect(screen, (0, 0, 0), (self.x - 450 + spot * 100, self.y, 75, 75), 5)
 
-            if item == "sword":
-                pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
-            elif item == "bow":
-                pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
-            if isinstance(item, list) and item[0] == "key":
-                    pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y + 22, 32, 32))
+            if item != "empty":
+                if not isinstance(item, list):
+                    screen.blit(self.icons[item], (self.x - 450 + 22 + spot * 100, self.y + 22))
+                else:
+                    key = item[0]
+                    screen.blit(self.icons[key], (self.x - 450 + 22 + spot * 100, self.y + 22))
 
 
     def draw_inventory_space(self, screen):
@@ -94,17 +98,20 @@ class Inventory:
                 screen.blit(s, rect)
                 pygame.draw.rect(screen, (0, 0, 0), rect, 5)
 
-                if item == "sword":
-                    pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
-                elif item == "bow":
-                    pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
-                if isinstance(item, list) and item[0] == "key":
-                    pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
+                if item != "empty":
+                    if not isinstance(item, list):
+                        screen.blit(self.icons[item], (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100))
+                    else:
+                        key = item[0]
+                        screen.blit(self.icons[key], (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100))
 
 
 
 class ChestStorage:
     def __init__(self):
+        self.icons = {}
+        for icon in os.listdir("assets/images/inventory_icons"):
+             self.icons[icon.removesuffix(".png")] = pygame.transform.scale(pygame.image.load(f"assets/images/inventory_icons/{icon}"), (32, 32))
         self.space = [["empty" for _ in range(9)] for _ in range(3)]
         self.item_carrying = "empty"
         self.pressed = False
@@ -134,13 +141,12 @@ class ChestStorage:
 
         self.draw_storage_space(screen)
 
-        if self.item_carrying == "sword":
-            pygame.draw.rect(screen, (255, 255, 255),
-                             (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
-        elif self.item_carrying == "bow":
-                    pygame.draw.rect(screen, (0, 255, 0), (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
-        if isinstance(self.item_carrying, list) and self.item_carrying[0] == "key":
-                    pygame.draw.rect(screen, (255, 0, 0), (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16, 32, 32))
+        if self.item_carrying != "empty":
+            if not isinstance(self.item_carrying, list):
+                screen.blit(self.icons[self.item_carrying], (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+            else:
+                key = self.item_carrying[0]
+                screen.blit(self.icons[key], (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         return self.item_carrying
 
 
@@ -157,9 +163,9 @@ class ChestStorage:
                 screen.blit(s, rect)
                 pygame.draw.rect(screen, (0, 0, 0), rect, 5)
 
-                if item == "sword":
-                    pygame.draw.rect(screen, (255, 255, 255), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
-                if item == "bow":
-                    pygame.draw.rect(screen, (0, 255, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
-                if isinstance(item, list) and item[0] == "key":
-                    pygame.draw.rect(screen, (255, 0, 0), (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100, 32, 32))
+                if item != "empty":
+                    if not isinstance(item, list):
+                        screen.blit(self.icons[item], (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100))
+                    else:
+                        key = item[0]
+                        screen.blit(self.icons[key], (self.x - 450 + 22 + spot * 100, self.y -478 + index * 100))

@@ -11,7 +11,7 @@ class TileManager:
         self.tiles = {}
         for number, image in enumerate(os.listdir(self.tile_path)):
             if image.endswith("png"):
-                self.tiles[f"{list(tiles.keys())[number]}"] = pygame.transform.scale(pygame.image.load(f"{self.tile_path}/{image}"), (32, 32))
+                self.tiles[f"{list(tiles.keys())[number]}"] = pygame.transform.scale(pygame.image.load(f"{self.tile_path}/{image}").convert(), (32, 32))
 
         self.tile_map = [[{"type": "empty", "top": False, "bottom": False, "left": False, "right": False} for _ in range(self.rect.width // 32)] for _ in range(self.rect.height // 32)]
 
