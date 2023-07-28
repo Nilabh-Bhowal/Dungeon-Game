@@ -9,14 +9,15 @@ class Enemy(entity.Entity):
     def __init__(self, x, y, width, height, speed, range, health, img):
         super().__init__(x, y, width, height, speed, health, img)
         self.immune = False
+        self.hurt_sound = pygame.mixer.Sound("assets/sounds/effects/enemy_hurt.wav")
         self.immune_timer = 0
         self.near_player = False
         self.state = "idle"
         self.range = range
 
-    def move(self, player, dt, rooms):
+    def move(self, player, dt, rooms, volume):
         super().move(dt, rooms)
-        self.check_damaged(player)
+        self.check_damaged(player, volume)
 
         if self.state == "target":
             self.target_player(player)
@@ -33,7 +34,7 @@ class Enemy(entity.Entity):
         self.movement[0] = -math.cos(angle)
         self.movement[1] = -math.sin(angle)
 
-    def check_damaged(self, player):
+    def check_damaged(self, player, volume):
         if self.immune:
             self.immune_timer -= 1
         if self.immune_timer <= 0 and self.immune:
@@ -41,6 +42,8 @@ class Enemy(entity.Entity):
             self.state = "idle"
 
         if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
+            self.hurt_sound.set_volume(volume * 0.8)
+            self.hurt_sound.play()
             self.health -= random.randint(20, 40)
             self.stun(player.angle)
 
@@ -56,19 +59,19 @@ class Enemy(entity.Entity):
 
 class Zombie(Enemy):
     def __init__(self, x, y):
-        super().__init__(x, y, 64, 64, 4, 550, 70, "player.png")
+        super().__init__(x, y, 64, 64, 4, 550, 70, "zombie.png")
         self.weapon = weapon.Sword(self, 10, 16)
         self.attack = False
 
-    def move(self, player, dt, rooms):
-        if self.weapon.rect.colliderect(player.rect):
+    def move(self, player, dt, rooms, volume):
+        if self.weapon.rect.inflate(10, 10).colliderect(player.rect):
             self.strike()
 
-        super().move(player, dt, rooms)
+        super().move(player, dt, rooms, volume)
         self.attack = self.weapon.update(dt)
 
     def strike(self):
-        if self.weapon.mode == "held" and random.randint(0, 15) == 15:
+        if self.weapon.mode == "held" and random.randint(0, 1) == 0:
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll):
@@ -78,7 +81,7 @@ class Zombie(Enemy):
 
 class Archer(Enemy):
     def __init__(self, x, y):
-        super().__init__(x, y, 64, 64, 4, 550, 70, "player.png")
+        super().__init__(x, y, 64, 64, 4, 700, 70, "archer.png")
         self.weapon = weapon.Bow(self, 10, 15)
         self.attack = False
 
@@ -86,11 +89,11 @@ class Archer(Enemy):
         if self.state == "target":
             self.strike()
 
-        super().move(player, dt, rooms)
+        super().move(player, dt, rooms, volume)
         self.weapon.update(player.rect.centerx + random.randint(-32, 32), player.rect.centery + random.randint(-32, 32), [player], dt, rooms, volume)
 
     def strike(self):
-        if self.weapon.mode == "held" and random.randint(0, 15) == 15:
+        if self.weapon.mode == "held" and random.randint(0, 120) == 0:
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll):

@@ -13,25 +13,28 @@ class Weapon:
         self.reload = reload_time
         self.timer = self.reload
         self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, size, size)
+        print(self.animation.data["attack"])
 
     def update(self, dt):
         self.animation.update(dt)
         self.update_mode(dt)
         if self.mode == "attack":
             self.animation.change_animation("attack")
-        elif self.animation.current_animation == "attack":
+        elif self.mode == "load":
+            self.animation.change_animation("load")
+        elif self.animation.frame >= len(self.animation.data["attack"]) - 1:
             self.animation.change_animation("idle")
         dx = (math.cos(math.radians(self.holder.angle - 90)))
         dy = -(math.sin(math.radians(self.holder.angle - 90)))
-        self.rect.centerx = self.holder.rect.x + (dx * self.rect.width * 2)
-        self.rect.centery = self.holder.rect.y + (dy * self.rect.height * 2)
+        self.rect.centerx = self.holder.rect.centerx + (dx * (16 + self.rect.height / 2))
+        self.rect.centery = self.holder.rect.centery + (dy * (16 + self.rect.height / 2))
 
         # allows the ability to check if holder attacked
         return self.mode == "attack"
 
     def update_mode(self, dt):
         # updates mode from held to attack to cooldown
-        if self.mode != "held":
+        if self.mode not in ["held", "load"]:
             if 0 < self.timer * dt <= (self.reload - 1) * dt:
                 self.mode = "cooldown"
             elif self.timer <= 0:
@@ -54,9 +57,10 @@ class Sword(Weapon):
 
 class Bow(Weapon):
     def __init__(self, holder, damage, speed):
-        super().__init__(holder, damage, 15, 5, "bow")
+        super().__init__(holder, damage, 10, 15, "bow")
         self.sound = pygame.mixer.Sound("assets/sounds/effects/shoot.wav")
         self.speed = speed
+        self.strength = 45
         self.arrows = []
 
     def target(self, target_x, target_y):
@@ -70,24 +74,26 @@ class Bow(Weapon):
         angle = self.target(target_x, target_y)
         if self.mode == "attack":
             self.sound.play()
-            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed))
+            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed, self.strength / 4))
             self.mode = "cooldown"
         arrows_to_remove = []
-        for arrow in self.arrows:
+
+        for i, arrow in sorted(enumerate(self.arrows), reverse=True):
             arrow.aim(dt, rooms)
-            if arrow.timer <= 0:
-                arrows_to_remove.append(arrow)
-        for arrow in self.arrows:
-            if arrow.collided:
-                arrows_to_remove.append(arrow)
+
+            if arrow.timer <= 0 or arrow.collided:
+                arrows_to_remove.append(i)
+
             for opponent in opponents:
                 if arrow.rect.colliderect(opponent.rect):
-                    opponent.health -= self.damage
+                    opponent.health -= arrow.damage
                     opponent.stun(-math.degrees(math.atan2(arrow.movement[1], arrow.movement[0])) + 90)
-                    arrows_to_remove.append(arrow)
-        for arrow in arrows_to_remove:
-            self.arrows.remove(arrow)
-            arrows_to_remove.remove(arrow)
+                    arrows_to_remove.append(i)
+                    break
+
+        # Remove arrows outside the loop
+        for i in arrows_to_remove:
+            self.arrows.pop(i)
 
         super().update(dt)
 
@@ -97,10 +103,13 @@ class Bow(Weapon):
             arrow.draw(screen, scroll)
 
 class Arrow:
-    def __init__(self, x, y, angle, speed):
+    def __init__(self, x, y, angle, speed, damage):
         self.rect = pygame.Rect(x, y, 15, 15)
         self.speed = speed
+        self.damage = damage
+        self.animation = animation.Animation("arrow")
         self.collided = False
+        self.angle = math.degrees(angle)
         self.movement = [math.cos(angle), math.sin(angle)]
         self.timer = 120
 
@@ -111,4 +120,5 @@ class Arrow:
         self.timer -= 1 * dt
 
     def draw(self, screen, scroll):
-        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+        draw_surf = pygame.transform.rotate(self.animation.get_image(), -self.angle - 90)
+        screen.blit(draw_surf, ((self.rect.centerx - scroll[0]) - (draw_surf.get_width() / 2), (self.rect.centery - scroll[1]) - (draw_surf.get_height() / 2)))

@@ -35,9 +35,9 @@ class Player(entity.Entity):
                     self.keys.append(item[1])
         if self.switched:
             if self.inventory.hotbar[self.inventory.active_slot] == "sword":
-                self.active_item = weapon.Sword(self, 30, 48)
+                self.active_item = weapon.Sword(self, 30, 64)
             elif self.inventory.hotbar[self.inventory.active_slot] == "bow":
-                self.active_item = weapon.Bow(self, 15, 20)
+                self.active_item = weapon.Bow(self, 25, 20)
             else:
                 self.active_item = "empty"
             self.switched = False
@@ -65,6 +65,6 @@ class Player(entity.Entity):
 
 
     def draw(self, screen, scroll):
-        super().draw(screen, scroll)
         if self.active_item != "empty":
             self.active_item.draw(screen, scroll)
+        super().draw(screen, scroll)

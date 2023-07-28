@@ -4,7 +4,7 @@
             "name": "Game",
             "type": "python",
             "request": "launch",
-            "program": "./main.py",
+            "program": "./game.py",
             "justMyCode": true
         },
         {

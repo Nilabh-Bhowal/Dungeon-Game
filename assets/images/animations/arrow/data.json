@@ -2,9 +2,5 @@
     {
         "name": "idle",
         "length": 1
-    },
-    {
-        "name": "attack",
-        "length": 8
     }
 ]

@@ -6,7 +6,6 @@ class Inventory:
         self.icons = {}
         for icon in os.listdir("assets/images/inventory_icons"):
             self.icons[icon.removesuffix(".png")] = pygame.transform.scale(pygame.image.load(f"assets/images/inventory_icons/{icon}"), (32, 32))
-        print(self.icons)
         self.space = [["empty" for _ in range(9)] for _ in range(3)]
         self.hotbar = ["empty" for _ in range(9)]
         self.active_slot = 0

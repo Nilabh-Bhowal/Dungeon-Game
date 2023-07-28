@@ -1,5 +1,4 @@
 import pygame
-import asyncio
 import math
 import json
 import time
@@ -71,7 +70,7 @@ def quit():
     sys.exit()
 
 # main menu function
-async def main_menu(state):
+def main_menu(state):
     play_button = ui.Button("Play", 640, 360, 500, 100)
     quit_button = ui.Button("Quit", 640, 510, 500, 100)
 
@@ -100,12 +99,11 @@ async def main_menu(state):
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return state
 
 
-async def settings_menu(screen, display):
+def settings_menu():
     return_button = ui.Button("Return", 640, 360, 500, 50)
     volume_button = ui.Button("Volume", 640, 435, 500, 50)
     size_button = ui.Button("Size", 640, 510, 500, 50)
@@ -132,24 +130,23 @@ async def settings_menu(screen, display):
         if return_button.draw(screen, volume, scaled_mouse_pos):
             in_settings = False
         if volume_button.draw(screen, volume, scaled_mouse_pos):
-            await volume_menu()
+            volume_menu()
         if size_button.draw(screen, volume, scaled_mouse_pos):
-            await size_menu()
+            size_menu()
         if controls_button.draw(screen, volume, scaled_mouse_pos):
-            await controls_menu()
+            controls_menu()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     if quitted:
         quit()
 
 
-async def volume_menu():
+def volume_menu():
     global volume
     return_button = ui.Button("Return", 640, 360, 500, 50)
 
@@ -183,12 +180,10 @@ async def volume_menu():
 
         clock.tick(60)
 
-        await asyncio.sleep(0)
-
     if quitted:
         quit()
 
-async def size_menu():
+def size_menu():
     global display, display_x, display_y
     return_button = ui.Button("Return", 640, 360, 500, 50)
     small_button = ui.Button("Small", 640, 435, 500, 50)
@@ -246,12 +241,11 @@ async def size_menu():
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     if quitted:
         quit()
 
-async def controls_menu():
+def controls_menu():
     global controls
     return_button = ui.Button("Return", 640, 360, 500, 50)
 
@@ -286,12 +280,11 @@ async def controls_menu():
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     if quitted:
         quit()
 
-async def game_over(state, level):
+def game_over(state, level):
     play_button = ui.Button("Restart", 640, 360, 400, 75)
     lobby_button = ui.Button("Lobby", 640, 460, 400, 75)
     quit_button = ui.Button("Quit", 640, 560, 400, 75)
@@ -323,13 +316,13 @@ async def game_over(state, level):
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return state
 
 
-async def win(state):
+def win(state, level):
     global keys
+    keys.append(f"{level}0")
     lobby_button = ui.Button("Continue", 640, 360, 400, 50)
     quit_button = ui.Button("Quit", 640, 435, 400, 50)
 
@@ -358,12 +351,11 @@ async def win(state):
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return state
 
 
-async def paused(state, level):
+def paused(state, level):
     play_button = ui.Button("Continue", 640, 360, 400, 50)
     restart_button = ui.Button("Restart", 640, 435, 400, 50)
     settings_button = ui.Button("Settings", 640, 510, 400, 50)
@@ -392,7 +384,7 @@ async def paused(state, level):
             state = f"level {level}"
             pause = False
         if settings_button.draw(screen, volume, scaled_mouse_pos):
-            await settings_menu(screen, display)
+            settings_menu()
         if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
             pause = False
@@ -402,12 +394,11 @@ async def paused(state, level):
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return state
 
 
-async def lobby_pause(state):
+def lobby_pause(state):
     play_button = ui.Button("Continue", 640, 360, 400, 50)
     settings_button = ui.Button("Settings", 640, 435, 400, 50)
     quit_button = ui.Button("Exit", 640, 510, 400, 50)
@@ -432,7 +423,7 @@ async def lobby_pause(state):
         if play_button.draw(screen, volume, scaled_mouse_pos):
             pause = False
         if settings_button.draw(screen, volume, scaled_mouse_pos):
-            await settings_menu(screen, display)
+            settings_menu()
         if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
             pause = False
@@ -442,12 +433,11 @@ async def lobby_pause(state):
         pygame.display.update()
 
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return state
 
 
-async def open_inventory(inventory):
+def open_inventory(inventory):
     inventory_open = True
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -472,10 +462,9 @@ async def open_inventory(inventory):
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
         clock.tick(60)
-        await asyncio.sleep(0)
 
 
-async def open_chest(inventory, items):
+def open_chest(inventory, items):
     inventory_open = True
 
     item_carrying = "empty"
@@ -505,12 +494,11 @@ async def open_chest(inventory, items):
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
         pygame.display.update()
         clock.tick(60)
-        await asyncio.sleep(0)
 
     return inventory, items
 
 
-async def lobby(state):
+def lobby(state):  # sourcery skip: low-code-quality
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -529,6 +517,7 @@ async def lobby(state):
 
     # initialize objects
     player = Player(state, keys)
+    print(player.keys)
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -562,6 +551,12 @@ async def lobby(state):
 
         # moves objects
         player.move(dt, rooms, enemies, scroll, scaled_mouse_pos, volume)
+        in_room = False
+        for room in rooms:
+            if player.rect.colliderect(room.rect):
+                in_room = True
+        if not in_room:
+            player.rect.topleft = prev_pos
         for lock in locks:
             lock.check_collision(player)
         if not fade:
@@ -591,7 +586,7 @@ async def lobby(state):
 
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
         if pause_button.draw(screen, volume, scaled_mouse_pos):
-            state = await lobby_pause(state)
+            state = lobby_pause(state)
             pt = time.time()
 
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
@@ -603,16 +598,15 @@ async def lobby(state):
 
         # ensures everything is running smoothly
         clock.tick(60)
+        prev_pos = player.rect.topleft
         now = time.time()
         dt = (now - pt) * 60
-        dt = min(dt, 4)
         pt = now
-        await asyncio.sleep(0)
 
     return state
 
 
-async def game_loop(state):
+def game_loop(state):
     global keys  # sourcery skip: low-code-quality
 
     cursor = pygame.image.load("assets/images/cursor.png")
@@ -641,6 +635,8 @@ async def game_loop(state):
     # initialize objects
     player = Player(state, keys)
 
+    hold_timer = 0
+
     death_particles = particle.ParticleEmitter()
 
     true_scroll = [0, 0]
@@ -665,14 +661,22 @@ async def game_loop(state):
                 collide_chest = False
                 for chest in chests:
                     if player.rect.colliderect(chest.rect):
-                        player.inventory, chest.items = open_chest(screen, display, player.inventory, chest.items)
+                        player.inventory, chest.items = open_chest(player.inventory, chest.items)
                         collide_chest = True
                 if not collide_chest:
-                    open_inventory(screen, display, player.inventory)
+                    open_inventory(player.inventory)
                 pt = time.time()
 
             if event.type == pygame.MOUSEBUTTONDOWN and issubclass(type(player.active_item), weapon.Weapon) and (player.active_item.mode == "held"):
+                if isinstance(player.active_item, weapon.Sword):
+                    player.active_item.mode = "attack"
+                elif isinstance(player.active_item, weapon.Bow):
+                    player.active_item.mode = "load"
+                    hold_timer = 0
+
+            if event.type == pygame.MOUSEBUTTONUP and (isinstance(player.active_item, weapon.Bow)) and (player.active_item.mode == "load"):
                 player.active_item.mode = "attack"
+                player.active_item.strength = min(hold_timer, 60)
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
@@ -709,9 +713,9 @@ async def game_loop(state):
 
         # sets the scroll value
         true_scroll[0] += ((player.rect.x - (1280 / 2 - player.rect.width / 2)
-                        - true_scroll[0]) * dt) + 10 * math.sin(5 * int(shake_timer))
+                        - true_scroll[0]) / 25 * dt) + 10 * math.sin(5 * int(shake_timer))
         true_scroll[1] += ((player.rect.y - (720 / 2 - player.rect.height / 2)
-                        - true_scroll[1]) * dt) + 2 * math.sin(5 * int(shake_timer))
+                        - true_scroll[1]) / 25 * dt) + 2 * math.sin(5 * int(shake_timer))
 
         scroll = [int(true_scroll[0]), int(true_scroll[1])]
 
@@ -719,25 +723,31 @@ async def game_loop(state):
 
         # moves objects
         player.move(dt, rooms, enemies, scroll, scaled_mouse_pos, volume)
+        in_room = False
+        for room in rooms:
+            if player.rect.colliderect(room.rect):
+                in_room = True
+        if not in_room:
+            player.rect.topleft = prev_pos
+        hold_timer += 1
         for lock in locks:
             shake = shake or lock.check_collision(player)
         death_particles.update(dt)
-        removed_enemies = []
-        for i, e in enumerate(enemies):
-            if isinstance(e, enemy.Zombie):
-                e.move(player, dt, rooms)
-            if isinstance(e, enemy.Archer):
-                e.move(player, dt, rooms, volume)
-            if e.rect.colliderect(player.rect):
+        for i, e in sorted(enumerate(enemies), reverse=True):
+            e.move(player, dt, rooms, volume)
+            if e.health <= 0:
+                enemies.pop(i)
+                death_particles.add_burst(e.rect.centerx, e.rect.centery, (200, 200, 200), 20, 10, 1, 500)
+                shake = True
+        for e in enemies:
+            half_width = e.rect.width / 3
+            half_height = e.rect.height / 3
+            e_rect_center_x, e_rect_center_y = e.rect.center
+            new_e_rect = pygame.Rect(e_rect_center_x - half_width,e_rect_center_y - half_height,half_width * 2,half_height * 2)
+            if new_e_rect.colliderect(player.rect):
                 player.stun(e.angle)
                 e.stun(-e.angle)
                 player.health -= 1
-            if e.health <= 0:
-                removed_enemies.append(i)
-                death_particles.add_burst(e.rect.centerx, e.rect.centery, (200, 200, 200), 20, 10, 1, 500)
-                shake = True
-        for i in reversed(removed_enemies):
-            enemies.pop(i)
 
         if player.state == "stunned" and player.immune_timer == 15:
             shake = True
@@ -751,6 +761,7 @@ async def game_loop(state):
         if a >= 255:
             state = "win"
             keys.append(f"{level + 1}0")
+
 
         if shake:
             explosion_sound.play()
@@ -780,7 +791,7 @@ async def game_loop(state):
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         if pause_button.draw(screen, volume, scaled_mouse_pos):
-            state = await paused(state, level)
+            state = paused(state, level)
             pt = time.time()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
@@ -795,33 +806,29 @@ async def game_loop(state):
 
         # ensures everything is running smoothly
         clock.tick(60)
+        prev_pos = player.rect.topleft
         now = time.time()
         dt = (now - pt) * 60
-        dt = min(dt, 4)
         pt = now
-        await asyncio.sleep(0)
 
     return state, level
 
 # set the state of the window
+state = "main menu"
 keys = ["20"]
-async def main():
-    state = "main menu"
-    running = True
-    while running:
-        if state == "main menu":
-            state = await main_menu(state)
-        elif state == "lobby":
-            state = await lobby(state)
-        elif state[:5] == "level":
-            state, level = await game_loop(state)
-        elif state == "win":
-            state = await win(state)
-        elif state == "game over":
-            state = await game_over(state, level)
-        if state == "quit":
-            running = False
-        await asyncio.sleep(0)
-    quit()
+running = True
+while running:
+    if state == "main menu":
+        state = main_menu(state)
+    elif state == "lobby":
+        state = lobby(state)
+    elif state[:5] == "level":
+        state, level = game_loop(state)
+    elif state == "win":
+        state = win(state, level)
+    elif state == "game over":
+        state = game_over(state, level)
+    if state == "quit":
+        running = False
 
-asyncio.run(main())
+quit()

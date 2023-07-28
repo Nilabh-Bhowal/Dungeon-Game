@@ -76,30 +76,27 @@ class Lock(Item):
 
     def check_collision(self, player):
         if not self.unlocked and self.rect.colliderect(player):
-            if isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key):
-                self.unlocked = True
-                return True
-            if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
-                player.rect.top = self.rect.bottom + 11
-                player.movement[1] = 0
-                return
-            elif player.rect.bottom >= self.rect.top - 5 and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
-                player.rect.bottom = self.rect.top - 11
-                player.movement[1] = 0
-                return
-            if player.rect.left <= self.rect.right + 5 and player.rect.left >= self.rect.left:
-                player.rect.left = self.rect.right + 11
-                player.movement[0] = 0
-                return
-            elif player.rect.right >= self.rect.left - 5:
-                player.rect.right = self.rect.left - 11
-                player.movement[0] = 0
-                return
+            self.handle_locked_collision(player)
 
+    def handle_locked_collision(self, player):
+        if (isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key)) or (self.key[1] == 0 and self.key in player.keys):
+            self.unlocked = True
+        else:
+            self.handle_player_blocked_movement(player)
 
-        for item in player.keys:
-            if item == self.key and item[1] == "0":
-                self.unlocked = True
+    def handle_player_blocked_movement(self, player):
+        if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+            player.rect.top = self.rect.bottom + 11
+            player.movement[1] = 0
+        elif player.rect.bottom >= self.rect.top - 5 and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+            player.rect.bottom = self.rect.top - 11
+            player.movement[1] = 0
+        elif player.rect.left <= self.rect.right + 5 and player.rect.left >= self.rect.left and player.rect.top >= self.rect.top and player.rect.bottom <= self.rect.bottom:
+            player.rect.left = self.rect.right + 11
+            player.movement[0] = 0
+        elif player.rect.right >= self.rect.left - 5 and player.rect.right <= self.rect.right and player.rect.top >= self.rect.top and player.rect.bottom <= self.rect.bottom:
+            player.rect.right = self.rect.left - 11
+            player.movement[0] = 0
 
     def draw(self, screen, scroll, editor=False):
         if not self.unlocked:
@@ -110,48 +107,49 @@ class Lock(Item):
 
 def can_pass(player, current_room, rooms):
     # sourcery skip: instance-method-first-arg-name
-    pu, pd, pl, pr = [False, False, False, False]
+    passable = {"up": False, "down": False, "left": False, "right": False}
     for room in rooms:
         if room != current_room:
-            pu = pu or player.rect.top - player.rect.height < room.rect.bottom \
+            passable["up"] = passable["up"] or player.rect.top - player.rect.height < room.rect.bottom \
                 and player.rect.top > room.rect.top \
                 and player.rect.left >= room.rect.left - 21 \
                 and player.rect.right <= room.rect.right + 21
-            pd = pd or player.rect.bottom + player.rect.height > room.rect.top \
+            passable["down"] = passable["down"] or player.rect.bottom + player.rect.height > room.rect.top \
                 and player.rect.bottom < room.rect.bottom\
                 and player.rect.left >= room.rect.left - 21 \
                 and player.rect.right <= room.rect.right + 21
-            pl = pl or player.rect.left - player.rect.width < room.rect.right \
+            passable["left"] = passable["left"] or player.rect.left - player.rect.width < room.rect.right \
                 and player.rect.left > room.rect.left \
                 and player.rect.top >= room.rect.top - 21 \
                 and player.rect.bottom <= room.rect.bottom + 21
-            pr = pr or player.rect.right + player.rect.width > room.rect.left \
+            passable["right"] = passable["right"] or player.rect.right + player.rect.width > room.rect.left \
                 and player.rect.right < room.rect.right \
                 and player.rect.top >= room.rect.top - 21 \
                 and player.rect.bottom <= room.rect.bottom + 21
-    return pu, pd, pl, pr
+    return passable
 
 
 # control player collision within room
 def collide(player, rooms, dt):
     collided = False
+    dt = min(dt, 4)
     for room in rooms:
         if player.rect.colliderect(room):
-            pu, pd, pl, pr = can_pass(player, room, rooms)
-            if ((not pl) or dt > 4) and player.rect.left <= room.rect.left + 5:
+            passable = can_pass(player, room, rooms)
+            if not passable["left"] and player.rect.left <= room.rect.left + 5:
                 player.rect.left = room.rect.left + 11
                 player.movement[0] = 0
                 collided = True
-            elif ((not pr) or dt > 4) and player.rect.right >= room.rect.right - 5:
+            elif not passable["right"] and player.rect.right >= room.rect.right - 5:
                 player.rect.left = room.rect.right - player.rect.width - 11
                 player.movement[0] = 0
                 collided = True
 
-            if ((not pu) or dt > 4) and player.rect.top < room.rect.top + 5:
+            if not passable["up"] and player.rect.top < room.rect.top + 5:
                 player.rect.top = room.rect.top + 11
                 player.movement[1] = 0
                 collided = True
-            elif ((not pd) or dt > 4) and player.rect.bottom >= room.rect.bottom - 5:
+            elif not passable["down"] and player.rect.bottom >= room.rect.bottom - 5:
                 player.rect.top = room.rect.bottom - player.rect.height - 11
                 player.movement[1] = 0
                 collided = True

@@ -10,10 +10,10 @@ class Animation:
             animations = json.load(f)
         self.data = {}
         for animation in animations:
-            self.data[animation["type"]] = []
-            for image in os.listdir(f"{path}/{animation['type']}"):
-                for _ in range(round(animation["length"] / len(os.listdir(f"{path}/{animation['type']}")))):
-                    self.data[animation["type"]].append(pygame.image.load(f"{path}/{animation['type']}/{image}"))
+            self.data[animation["name"]] = []
+            for image in os.listdir(f"{path}/{animation['name']}"):
+                for _ in range(round(animation["length"] / len(os.listdir(f"{path}/{animation['name']}")))):
+                    self.data[animation["name"]].append(pygame.transform.scale2x(pygame.image.load(f"{path}/{animation['name']}/{image}")))
         self.current_animation = list(self.data.keys())[0]
 
     def update(self, dt):
@@ -22,8 +22,9 @@ class Animation:
             self.frame = 0
 
     def change_animation(self, animation):
-        self.current_animation = animation
-        self.frame = 0
+        if self.current_animation != animation:
+            self.current_animation = animation
+            self.frame = 0
 
     def get_image(self):
         return self.data[self.current_animation][self.frame]
