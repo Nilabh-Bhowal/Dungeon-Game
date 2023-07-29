@@ -518,6 +518,8 @@ def lobby(state):  # sourcery skip: low-code-quality
     # initialize objects
     player = Player(state, keys)
     print(player.keys)
+    for lock in locks:
+        print(lock.key)
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -740,16 +742,15 @@ def game_loop(state):
                 death_particles.add_burst(e.rect.centerx, e.rect.centery, (200, 200, 200), 20, 10, 1, 500)
                 shake = True
         for e in enemies:
-            half_width = e.rect.width / 3
-            half_height = e.rect.height / 3
-            e_rect_center_x, e_rect_center_y = e.rect.center
-            new_e_rect = pygame.Rect(e_rect_center_x - half_width,e_rect_center_y - half_height,half_width * 2,half_height * 2)
+            half_width = e.rect.width / 5
+            half_height = e.rect.height / 5
+            new_e_rect = pygame.Rect(e.rect.centerx - half_width, e.rect.centery - half_height, half_width * 2, half_height * 2)
             if new_e_rect.colliderect(player.rect):
                 player.stun(e.angle)
                 e.stun(-e.angle)
-                player.health -= 1
+                break
 
-        if player.state == "stunned" and player.immune_timer == 15:
+        if player.state == "stunned" and shake_timer == 0 and not shake:
             shake = True
         if player.health <= 0 and not fade:
             state = "game over"

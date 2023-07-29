@@ -42,7 +42,7 @@ class Enemy(entity.Entity):
             self.state = "idle"
 
         if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
-            self.hurt_sound.set_volume(volume * 0.8)
+            self.hurt_sound.set_volume(volume * 0.2)
             self.hurt_sound.play()
             self.health -= random.randint(20, 40)
             self.stun(player.angle)

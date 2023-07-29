@@ -13,16 +13,15 @@ class Weapon:
         self.reload = reload_time
         self.timer = self.reload
         self.rect = pygame.Rect(self.holder.rect.x, self.holder.rect.y, size, size)
-        print(self.animation.data["attack"])
 
     def update(self, dt):
-        self.animation.update(dt)
+        self.animation.update()
         self.update_mode(dt)
         if self.mode == "attack":
             self.animation.change_animation("attack")
         elif self.mode == "load":
             self.animation.change_animation("load")
-        elif self.animation.frame >= len(self.animation.data["attack"]) - 1:
+        elif self.mode == "held":
             self.animation.change_animation("idle")
         dx = (math.cos(math.radians(self.holder.angle - 90)))
         dy = -(math.sin(math.radians(self.holder.angle - 90)))
@@ -52,7 +51,7 @@ class Weapon:
 
 class Sword(Weapon):
     def __init__(self, holder, damage, size):
-        super().__init__(holder, damage, 15, size, "sword")
+        super().__init__(holder, damage, 7, size, "sword")
 
 
 class Bow(Weapon):
@@ -76,24 +75,20 @@ class Bow(Weapon):
             self.sound.play()
             self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed, self.strength / 4))
             self.mode = "cooldown"
-        arrows_to_remove = []
 
         for i, arrow in sorted(enumerate(self.arrows), reverse=True):
             arrow.aim(dt, rooms)
-
-            if arrow.timer <= 0 or arrow.collided:
-                arrows_to_remove.append(i)
-
+            arrow_removed = False
+            if (arrow.timer <= 0 or arrow.collided) and not arrow_removed:
+                self.arrows.pop(i)
+                arrow_removed = True
             for opponent in opponents:
-                if arrow.rect.colliderect(opponent.rect):
+                if arrow.rect.colliderect(opponent.rect) and not arrow_removed:
                     opponent.health -= arrow.damage
                     opponent.stun(-math.degrees(math.atan2(arrow.movement[1], arrow.movement[0])) + 90)
-                    arrows_to_remove.append(i)
+                    self.arrows.pop(i)
+                    arrow_removed = True
                     break
-
-        # Remove arrows outside the loop
-        for i in arrows_to_remove:
-            self.arrows.pop(i)
 
         super().update(dt)
 
@@ -114,6 +109,7 @@ class Arrow:
         self.timer = 120
 
     def aim(self, dt, rooms):
+        self.animation.update()
         self.collided = dungeon.collide(self, rooms, dt)
         self.rect.x += (self.movement[0] * self.speed * dt)
         self.rect.y += (self.movement[1] * self.speed * dt)

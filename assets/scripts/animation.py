@@ -16,7 +16,7 @@ class Animation:
                     self.data[animation["name"]].append(pygame.transform.scale2x(pygame.image.load(f"{path}/{animation['name']}/{image}")))
         self.current_animation = list(self.data.keys())[0]
 
-    def update(self, dt):
+    def update(self):
         self.frame += 1
         if self.frame > len(self.data[self.current_animation]) - 1:
             self.frame = 0

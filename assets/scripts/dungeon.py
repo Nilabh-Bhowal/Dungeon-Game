@@ -3,6 +3,7 @@ import pygame
 import assets.scripts.ui as ui
 import assets.scripts.tile as tile
 import assets.scripts.inventory as inventory
+import assets.scripts.animation as animation
 
 
 class Room:
@@ -18,13 +19,19 @@ class Room:
 
 
 class Item:
-    def __init__(self, x, y, width, height, color):
+    def __init__(self, x, y, width, height, color, folder=None):
         self.rect = pygame.Rect(x, y, width, height)
+        self.animation = animation.Animation(folder) if folder else None
         self.color = color
 
     def draw(self, screen, scroll):
+        if self.animation:
+            self.animation.update()
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
-            pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+            if self.animation:
+                screen.blit(self.animation.get_image(), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
+            else:
+                pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
 
 
 class DungeonRoom(Room):
@@ -70,19 +77,25 @@ class LevelEnter(Item):
 
 class Lock(Item):
     def __init__(self, x, y, key):
-        super().__init__(x, y, 256, 64, (255, 0, 0))
+        super().__init__(x, y, 256, 64, (255, 0, 0), "lock")
+        print(self.animation.data)
         self.key = key
         self.unlocked = False
 
     def check_collision(self, player):
         if not self.unlocked and self.rect.colliderect(player):
-            self.handle_locked_collision(player)
+            return self.handle_locked_collision(player)
+        elif self.key[1] == "0" and self.key in player.keys:
+            self.unlocked = True
 
     def handle_locked_collision(self, player):
-        if (isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key)) or (self.key[1] == 0 and self.key in player.keys):
+        if isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key):
             self.unlocked = True
+            self.animation.change_animation("open")
+            return True
         else:
             self.handle_player_blocked_movement(player)
+        return
 
     def handle_player_blocked_movement(self, player):
         if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
@@ -99,7 +112,7 @@ class Lock(Item):
             player.movement[0] = 0
 
     def draw(self, screen, scroll, editor=False):
-        if not self.unlocked:
+        if self.animation.frame != len(self.animation.data["open"]) - 1 or (self.unlocked and self.animation.current_animation == "idle"):
             super().draw(screen, scroll)
             if editor:
                 ui.title(self.key, self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
