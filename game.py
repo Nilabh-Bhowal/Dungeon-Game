@@ -517,9 +517,7 @@ def lobby(state):  # sourcery skip: low-code-quality
 
     # initialize objects
     player = Player(state, keys)
-    print(player.keys)
-    for lock in locks:
-        print(lock.key)
+    prev_pos = [0, 0]
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -557,7 +555,7 @@ def lobby(state):  # sourcery skip: low-code-quality
         for room in rooms:
             if player.rect.colliderect(room.rect):
                 in_room = True
-        if not in_room:
+        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 1):
             player.rect.topleft = prev_pos
         for lock in locks:
             lock.check_collision(player)
@@ -636,6 +634,7 @@ def game_loop(state):
 
     # initialize objects
     player = Player(state, keys)
+    prev_pos = [0, 0]
 
     hold_timer = 0
 
@@ -678,7 +677,7 @@ def game_loop(state):
 
             if event.type == pygame.MOUSEBUTTONUP and (isinstance(player.active_item, weapon.Bow)) and (player.active_item.mode == "load"):
                 player.active_item.mode = "attack"
-                player.active_item.strength = min(hold_timer, 60)
+                player.active_item.strength = min(hold_timer * 2, 60)
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
@@ -729,7 +728,7 @@ def game_loop(state):
         for room in rooms:
             if player.rect.colliderect(room.rect):
                 in_room = True
-        if not in_room:
+        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 1):
             player.rect.topleft = prev_pos
         hold_timer += 1
         for lock in locks:

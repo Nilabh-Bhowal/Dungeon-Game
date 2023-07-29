@@ -78,7 +78,6 @@ class LevelEnter(Item):
 class Lock(Item):
     def __init__(self, x, y, key):
         super().__init__(x, y, 256, 64, (255, 0, 0), "lock")
-        print(self.animation.data)
         self.key = key
         self.unlocked = False
 
@@ -98,18 +97,22 @@ class Lock(Item):
         return
 
     def handle_player_blocked_movement(self, player):
-        if player.rect.top <= self.rect.bottom + 5 and player.rect.top >= self.rect.top and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+        if player.rect.top <= self.rect.bottom + 5 and player.rect.top > self.rect.top and player.rect.left > self.rect.left and player.rect.right < self.rect.right:
             player.rect.top = self.rect.bottom + 11
             player.movement[1] = 0
-        elif player.rect.bottom >= self.rect.top - 5 and player.rect.bottom <= self.rect.bottom and player.rect.left >= self.rect.left and player.rect.right <= self.rect.right:
+            return
+        elif player.rect.bottom >= self.rect.top - 5 and player.rect.bottom < self.rect.bottom and player.rect.left > self.rect.left and player.rect.right < self.rect.right:
             player.rect.bottom = self.rect.top - 11
             player.movement[1] = 0
-        elif player.rect.left <= self.rect.right + 5 and player.rect.left >= self.rect.left and player.rect.top >= self.rect.top and player.rect.bottom <= self.rect.bottom:
+            return
+        if player.rect.left <= self.rect.right + 5 and player.rect.left > self.rect.left and player.rect.top > self.rect.top and player.rect.bottom < self.rect.bottom:
             player.rect.left = self.rect.right + 11
             player.movement[0] = 0
-        elif player.rect.right >= self.rect.left - 5 and player.rect.right <= self.rect.right and player.rect.top >= self.rect.top and player.rect.bottom <= self.rect.bottom:
+            return
+        elif player.rect.right >= self.rect.left - 5 and player.rect.right < self.rect.right and player.rect.top > self.rect.top and player.rect.bottom < self.rect.bottom:
             player.rect.right = self.rect.left - 11
             player.movement[0] = 0
+            return
 
     def draw(self, screen, scroll, editor=False):
         if self.animation.frame != len(self.animation.data["open"]) - 1 or (self.unlocked and self.animation.current_animation == "idle"):

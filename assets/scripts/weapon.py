@@ -73,7 +73,7 @@ class Bow(Weapon):
         angle = self.target(target_x, target_y)
         if self.mode == "attack":
             self.sound.play()
-            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed, self.strength / 4))
+            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed, self.strength / 2))
             self.mode = "cooldown"
 
         for i, arrow in sorted(enumerate(self.arrows), reverse=True):

@@ -33,7 +33,7 @@ class Enemy(entity.Entity):
         self.angle = -math.degrees(angle) - 90
         self.movement[0] = -math.cos(angle)
         self.movement[1] = -math.sin(angle)
-
+        
     def check_damaged(self, player, volume):
         if self.immune:
             self.immune_timer -= 1
