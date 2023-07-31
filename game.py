@@ -31,6 +31,8 @@ pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png").con
 screen = pygame.Surface((display_x, display_y))
 
 
+pygame.mixer.music.load("assets/sounds/music/gameplay.wav")
+
 
 def load_level(level):
     with open(f"assets/levels/{level}.json", "r") as f:
@@ -71,14 +73,22 @@ def quit():
 
 # main menu function
 def main_menu(state):
-    play_button = ui.Button("Play", 640, 360, 500, 100)
-    quit_button = ui.Button("Quit", 640, 510, 500, 100)
+    play_button = ui.Button("Play", 640, 360, 500, 50, "large")
+    quit_button = ui.Button("Quit", 640, 435, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
 
+    shade = pygame.Surface((1280, 720), pygame.SRCALPHA)
+    shade.fill((0, 0, 0, 64))
+
+    splash = pygame.image.load("assets/images/splash.png")
+
     clock = pygame.time.Clock()
+
+    pygame.mixer.music.set_volume(0.25)
+    pygame.mixer.music.play(-1)
 
     while state == "main menu":
         for event in pygame.event.get():
@@ -88,7 +98,9 @@ def main_menu(state):
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((96, 178, 124))
-        ui.title("Goofy Ahh Dungeon Game",  640, 200, screen)
+        screen.blit(splash, (0, 0))
+        screen.blit(shade, (0, 0))
+        ui.title("Goofy Ahh Dungeon Game", 640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
         if quit_button.draw(screen, volume, scaled_mouse_pos):
@@ -100,14 +112,15 @@ def main_menu(state):
 
         clock.tick(60)
 
+    pygame.mixer.music.fadeout(1000)
     return state
 
 
 def settings_menu():
-    return_button = ui.Button("Return", 640, 360, 500, 50)
-    volume_button = ui.Button("Volume", 640, 435, 500, 50)
-    size_button = ui.Button("Size", 640, 510, 500, 50)
-    controls_button = ui.Button("Controls", 640, 585, 500, 50)
+    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
+    volume_button = ui.Button("Volume", 640, 435, 500, 50, "large")
+    size_button = ui.Button("Size", 640, 510, 500, 50, "large")
+    controls_button = ui.Button("Controls", 640, 585, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -148,7 +161,7 @@ def settings_menu():
 
 def volume_menu():
     global volume
-    return_button = ui.Button("Return", 640, 360, 500, 50)
+    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
 
     volume_slider = ui.Slider(640, 435, "idk", volume * 100, 100)
 
@@ -185,11 +198,11 @@ def volume_menu():
 
 def size_menu():
     global display, display_x, display_y
-    return_button = ui.Button("Return", 640, 360, 500, 50)
-    small_button = ui.Button("Small", 640, 435, 500, 50)
-    medium_button = ui.Button("Medium", 640, 510, 500, 50)
-    large_button = ui.Button("Large", 640, 585, 500, 50)
-    full_button = ui.Button("Fullscreen", 640, 660, 500, 50)
+    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
+    small_button = ui.Button("Small", 640, 435, 500, 50, "large")
+    medium_button = ui.Button("Medium", 640, 510, 500, 50, "large")
+    large_button = ui.Button("Large", 640, 585, 500, 50, "large")
+    full_button = ui.Button("Fullscreen", 640, 660, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -247,7 +260,7 @@ def size_menu():
 
 def controls_menu():
     global controls
-    return_button = ui.Button("Return", 640, 360, 500, 50)
+    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
 
     keybind_options = [
         ui.KeybindChanger(640, 435 + y * 60, control, controls[control])
@@ -285,9 +298,9 @@ def controls_menu():
         quit()
 
 def game_over(state, level):
-    play_button = ui.Button("Restart", 640, 360, 400, 75)
-    lobby_button = ui.Button("Lobby", 640, 460, 400, 75)
-    quit_button = ui.Button("Quit", 640, 560, 400, 75)
+    play_button = ui.Button("Restart", 640, 360, 500, 50, "large")
+    lobby_button = ui.Button("Lobby", 640, 435, 500, 50, "large")
+    quit_button = ui.Button("Quit", 640, 510, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -323,8 +336,8 @@ def game_over(state, level):
 def win(state, level):
     global keys
     keys.append(f"{level}0")
-    lobby_button = ui.Button("Continue", 640, 360, 400, 50)
-    quit_button = ui.Button("Quit", 640, 435, 400, 50)
+    lobby_button = ui.Button("Continue", 640, 360, 500, 50, "large")
+    quit_button = ui.Button("Quit", 640, 435, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -355,11 +368,11 @@ def win(state, level):
     return state
 
 
-def paused(state, level):
-    play_button = ui.Button("Continue", 640, 360, 400, 50)
-    restart_button = ui.Button("Restart", 640, 435, 400, 50)
-    settings_button = ui.Button("Settings", 640, 510, 400, 50)
-    quit_button = ui.Button("Exit", 640, 585, 400, 50)
+def paused(state):
+    play_button = ui.Button("Continue", 640, 360, 500, 50, "large")
+    restart_button = ui.Button("Restart", 640, 435, 500, 50, "large")
+    settings_button = ui.Button("Settings", 640, 510, 500, 50, "large")
+    quit_button = ui.Button("Exit", 640, 585, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -368,6 +381,7 @@ def paused(state, level):
     clock = pygame.time.Clock()
 
     pause = True
+    restart = False
     while pause:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -381,8 +395,8 @@ def paused(state, level):
         if play_button.draw(screen, volume, scaled_mouse_pos):
             pause = False
         if restart_button.draw(screen, volume, scaled_mouse_pos):
-            state = f"level {level}"
             pause = False
+            restart = True
         if settings_button.draw(screen, volume, scaled_mouse_pos):
             settings_menu()
         if quit_button.draw(screen, volume, scaled_mouse_pos):
@@ -395,13 +409,13 @@ def paused(state, level):
 
         clock.tick(60)
 
-    return state
+    return state, restart
 
 
 def lobby_pause(state):
-    play_button = ui.Button("Continue", 640, 360, 400, 50)
-    settings_button = ui.Button("Settings", 640, 435, 400, 50)
-    quit_button = ui.Button("Exit", 640, 510, 400, 50)
+    play_button = ui.Button("Continue", 640, 360, 500, 50, "large")
+    settings_button = ui.Button("Settings", 640, 435, 500, 50, "large")
+    quit_button = ui.Button("Exit", 640, 510, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -425,7 +439,7 @@ def lobby_pause(state):
         if settings_button.draw(screen, volume, scaled_mouse_pos):
             settings_menu()
         if quit_button.draw(screen, volume, scaled_mouse_pos):
-            state = "lobby"
+            state = "quit"
             pause = False
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
@@ -435,33 +449,6 @@ def lobby_pause(state):
         clock.tick(60)
 
     return state
-
-
-def open_inventory(inventory):
-    inventory_open = True
-
-    cursor = pygame.image.load("assets/images/cursor.png")
-    cursor.set_colorkey((255, 255, 255))
-
-    clock = pygame.time.Clock()
-    while inventory_open:
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                quit()
-
-            if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
-                inventory_open = False
-
-        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
-
-        screen.fill((96, 178, 124))
-        inventory.draw(screen, scaled_mouse_pos)
-        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
-
-        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
-        pygame.display.update()
-        clock.tick(60)
 
 
 def open_chest(inventory, items):
@@ -486,8 +473,8 @@ def open_chest(inventory, items):
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((96, 178, 124))
-        inventory.draw_hotbar(screen)
-        item_carrying = inventory.handle_hotbar_mouse_interaction(item_carrying, scaled_mouse_pos, True)
+        item_carrying = inventory.handle_mouse_interaction(item_carrying, scaled_mouse_pos)
+        inventory.draw(screen, scaled_mouse_pos)
         item_carrying = items.draw(item_carrying, screen, scaled_mouse_pos)
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
@@ -508,7 +495,7 @@ def lobby(state):  # sourcery skip: low-code-quality
     fade_surf = pygame.Surface((1280, 720))
     fade = False
 
-    pause_button = ui.Button("II", 20, 20, 32, 32)
+    pause_button = ui.Button("", 20, 20, 32, 32, "pause")
 
     # load level from file
     rooms, _, enemies, _, level_enters, locks = load_level(0)
@@ -555,7 +542,7 @@ def lobby(state):  # sourcery skip: low-code-quality
         for room in rooms:
             if player.rect.colliderect(room.rect):
                 in_room = True
-        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 1):
+        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 2):
             player.rect.topleft = prev_pos
         for lock in locks:
             lock.check_collision(player)
@@ -607,8 +594,6 @@ def lobby(state):  # sourcery skip: low-code-quality
 
 
 def game_loop(state):
-    global keys  # sourcery skip: low-code-quality
-
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
@@ -618,7 +603,7 @@ def game_loop(state):
     shake = False
     shake_timer = 0
 
-    pause_button = ui.Button("II", 20, 20, 32, 32)
+    pause_button = ui.Button("", 20, 20, 32, 32, "pause")
 
     fade = False
     a = 0
@@ -636,6 +621,8 @@ def game_loop(state):
     player = Player(state, keys)
     prev_pos = [0, 0]
 
+    pygame.mixer.music.play(-1)
+
     hold_timer = 0
 
     death_particles = particle.ParticleEmitter()
@@ -652,6 +639,7 @@ def game_loop(state):
     while state == f"level {level}" and not restart:
 
         explosion_sound.set_volume(volume / 2)
+        pygame.mixer.music.set_volume(volume / 2)
 
         for event in pygame.event.get():
             # check if player quits
@@ -659,13 +647,9 @@ def game_loop(state):
                 state = "quit"
 
             if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
-                collide_chest = False
                 for chest in chests:
                     if player.rect.colliderect(chest.rect):
                         player.inventory, chest.items = open_chest(player.inventory, chest.items)
-                        collide_chest = True
-                if not collide_chest:
-                    open_inventory(player.inventory)
                 pt = time.time()
 
             if event.type == pygame.MOUSEBUTTONDOWN and issubclass(type(player.active_item), weapon.Weapon) and (player.active_item.mode == "held"):
@@ -728,7 +712,7 @@ def game_loop(state):
         for room in rooms:
             if player.rect.colliderect(room.rect):
                 in_room = True
-        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 1):
+        if (not in_room) or (math.hypot(player.rect.x - prev_pos[0], player.rect.y - prev_pos[1]) > player.speed * math.sqrt(2) * dt + 2):
             player.rect.topleft = prev_pos
         hold_timer += 1
         for lock in locks:
@@ -748,6 +732,8 @@ def game_loop(state):
                 player.stun(e.angle)
                 e.stun(-e.angle)
                 break
+
+        end.update(dt)
 
         if player.state == "stunned" and shake_timer == 0 and not shake:
             shake = True
@@ -791,7 +777,7 @@ def game_loop(state):
         pygame.draw.rect(screen, (255, 0, 0), (390, 525, 500, 35))
         pygame.draw.rect(screen, (0, 255, 0), (390, 525, player.health * 5, 35))
         if pause_button.draw(screen, volume, scaled_mouse_pos):
-            state = paused(state, level)
+            state, restart = paused(state)
             pt = time.time()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
         ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
@@ -811,6 +797,7 @@ def game_loop(state):
         dt = (now - pt) * 60
         pt = now
 
+    pygame.mixer.music.fadeout(1000)
     return state, level
 
 # set the state of the window

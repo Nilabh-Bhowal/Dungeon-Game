@@ -1,9 +1,11 @@
 import pygame
+import random
 
 import assets.scripts.ui as ui
 import assets.scripts.tile as tile
 import assets.scripts.inventory as inventory
 import assets.scripts.animation as animation
+import assets.scripts.particle as particle
 
 
 class Room:
@@ -19,19 +21,14 @@ class Room:
 
 
 class Item:
-    def __init__(self, x, y, width, height, color, folder=None):
+    def __init__(self, x, y, width, height, folder):
         self.rect = pygame.Rect(x, y, width, height)
-        self.animation = animation.Animation(folder) if folder else None
-        self.color = color
+        self.animation = animation.Animation(folder)
 
     def draw(self, screen, scroll):
-        if self.animation:
-            self.animation.update()
+        self.animation.update()
         if (self.rect.left - scroll[0] <= 1280 and self.rect.right - scroll[0] >= 0) and (self.rect.top - scroll[1] <= 720 and self.rect.bottom - scroll[1] >= 0):
-            if self.animation:
-                screen.blit(self.animation.get_image(), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
-            else:
-                pygame.draw.rect(screen, self.color, (self.rect.x - scroll[0], self.rect.y - scroll[1], self.rect.width, self.rect.height))
+            screen.blit(self.animation.get_image(), (self.rect.x - scroll[0], self.rect.y - scroll[1]))
 
 
 class DungeonRoom(Room):
@@ -46,7 +43,7 @@ class Corridor(Room):
 
 class Chest(Item):
     def __init__(self, x, y, storage=None):
-        super().__init__(x, y, 128, 64, (255, 175, 112))
+        super().__init__(x, y, 128, 64, "chest")
         self.items = inventory.ChestStorage()
         if storage:
             self.items.space = storage
@@ -59,16 +56,32 @@ class Chest(Item):
 
 class End(Item):
     def __init__(self, x, y):
-        super().__init__(x, y, 128, 128, (255, 255, 0))
+        super().__init__(x, y, 128, 128, "end")
+        self.timer = 0
+        self.particles = particle.ParticleEmitter()
+
+    def update(self, dt):
+        self.timer += 1
+        if self.timer >= 5:
+            self.timer = 0
+            self.particles.add_particle(self.rect.centerx, self.rect.centery,(240, 229, 197), 15, random.uniform(-1, 1), random.uniform(-1, 1), 2, 0.1)
+        self.particles.update(dt)
+
+    def draw(self, screen, scroll):
+        self.particles.draw(screen, scroll)
+        super().draw(screen, scroll)
 
 
 class LevelEnter(Item):
     def __init__(self, x, y, level):
-        super().__init__(x, y, 256, 128, (255, 100, 0))
+        super().__init__(x, y, 256, 128, "level_enter")
         self.level = level
 
     def check_collision(self, player):
-        return self.level if player.rect.colliderect(self.rect) else None
+        if player.rect.colliderect(self.rect):
+            self.animation.change_animation("selected")
+            return self.level
+        return
 
     def draw(self, screen, scroll):
         super().draw(screen, scroll)
@@ -77,7 +90,7 @@ class LevelEnter(Item):
 
 class Lock(Item):
     def __init__(self, x, y, key):
-        super().__init__(x, y, 256, 64, (255, 0, 0), "lock")
+        super().__init__(x, y, 256, 64, "lock")
         self.key = key
         self.unlocked = False
 
@@ -90,6 +103,7 @@ class Lock(Item):
     def handle_locked_collision(self, player):
         if isinstance(player.inventory.hotbar[player.inventory.active_slot], list) and (player.inventory.hotbar[player.inventory.active_slot][1] == self.key):
             self.unlocked = True
+            player.inventory.hotbar[player.inventory.active_slot] = "empty"
             self.animation.change_animation("open")
             return True
         else:
@@ -115,7 +129,7 @@ class Lock(Item):
             return
 
     def draw(self, screen, scroll, editor=False):
-        if self.animation.frame != len(self.animation.data["open"]) - 1 or (self.unlocked and self.animation.current_animation == "idle"):
+        if (self.animation.frame != len(self.animation.data["open"]) - 1) and not (self.unlocked and self.animation.current_animation == "idle"):
             super().draw(screen, scroll)
             if editor:
                 ui.title(self.key, self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)

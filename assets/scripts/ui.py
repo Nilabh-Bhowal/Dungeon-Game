@@ -10,9 +10,10 @@ def title(text, x, y, screen):
 
 
 class Button:
-    def __init__(self, text, x, y, width, height):
+    def __init__(self, text, x, y, width, height, img):
         self.text = text
         self.rect = pygame.Rect(0, 0, width, height)
+        self.img = pygame.transform.scale2x(pygame.image.load(f"assets/images/buttons/{img}.png"))
         self.rect.centerx = x
         self.rect.centery = y
         self.clicked = True
@@ -37,15 +38,15 @@ class Button:
 
 
     def hover_draw(self, screen):
-        pygame.draw.rect(screen, (255, 255, 255), (self.rect.x - 15,
-                         self.rect.y - 15, self.rect.width + 30, self.rect.height + 30))
+        draw_surf = pygame.transform.scale_by(self.img, 1.1)
+        screen.blit(draw_surf, (self.rect.centerx - draw_surf.get_width() / 2, self.rect.centery - draw_surf.get_height() / 2))
 
         self.draw_text(screen)
         return False
 
     def normal_draw(self, pressed, screen):
         result = pressed
-        pygame.draw.rect(screen, (255, 255, 255), self.rect)
+        screen.blit(self.img, (self.rect.x, self.rect.y))
 
         self.draw_text(screen)
         return(result)

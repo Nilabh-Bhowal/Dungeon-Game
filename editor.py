@@ -150,9 +150,9 @@ pressed = False
 
 clock = pygame.time.Clock()
 
-rooms_button = ui.Button("Rooms", 1130, 200, 200, 25)
-enemies_button = ui.Button("Enemies", 1130, 300, 200, 25)
-items_button = ui.Button("Items", 1130, 400, 200, 25)
+rooms_button = ui.Button("Rooms", 1130, 200, 200, 25, "large")
+enemies_button = ui.Button("Enemies", 1130, 300, 200, 25, "large")
+items_button = ui.Button("Items", 1130, 400, 200, 25, "large")
 
 rooms_list = ["dungeon", "corridor"]
 enemies_list = ["zombie", "archer"]

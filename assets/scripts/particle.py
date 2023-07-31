@@ -50,4 +50,5 @@ class ParticleEmitter:
 
     def draw(self, screen, scroll):
         for particle in self.particles:
-            particle.draw(screen, scroll)
+            if (particle.x - scroll[0] <= 1280 and particle.x + particle.size - scroll[0] >= 0) and (particle.y - scroll[1] <= 720 and particle.y + particle.size - scroll[1] >= 0):
+                particle.draw(screen, scroll)

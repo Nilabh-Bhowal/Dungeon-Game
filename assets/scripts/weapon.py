@@ -73,7 +73,7 @@ class Bow(Weapon):
         angle = self.target(target_x, target_y)
         if self.mode == "attack":
             self.sound.play()
-            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed, self.strength / 2))
+            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed * self.strength / 60, self.strength / 2))
             self.mode = "cooldown"
 
         for i, arrow in sorted(enumerate(self.arrows), reverse=True):
@@ -118,3 +118,8 @@ class Arrow:
     def draw(self, screen, scroll):
         draw_surf = pygame.transform.rotate(self.animation.get_image(), -self.angle - 90)
         screen.blit(draw_surf, ((self.rect.centerx - scroll[0]) - (draw_surf.get_width() / 2), (self.rect.centery - scroll[1]) - (draw_surf.get_height() / 2)))
+
+
+class Fireball(Arrow):
+    def __init__(self, x, y, angle):
+        super().__init__(x, y, angle, 16, 15)

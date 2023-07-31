@@ -26,13 +26,6 @@ class Player(entity.Entity):
         dx = scaled_mouse_pos[0] - (self.rect.centerx - scroll[0])
         dy = scaled_mouse_pos[1] - (self.rect.centery - scroll[1])
         self.angle = -math.degrees(math.atan2(dy, dx)) + 90
-        for item in self.inventory.hotbar:
-            if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
-                self.keys.append(item[1])
-        for row in self.inventory.space:
-            for item in row:
-                if isinstance(item, list) and item[0] == "key" and item[1] not in self.keys:
-                    self.keys.append(item[1])
         if self.switched:
             if self.inventory.hotbar[self.inventory.active_slot] == "sword":
                 self.active_item = weapon.Sword(self, 30, 64)

@@ -20,6 +20,8 @@ class Animation:
         self.frame += 1
         if self.frame > len(self.data[self.current_animation]) - 1:
             self.frame = 0
+            return True
+        return False
 
     def change_animation(self, animation):
         if self.current_animation != animation:
