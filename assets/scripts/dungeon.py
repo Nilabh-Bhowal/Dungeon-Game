@@ -85,7 +85,7 @@ class LevelEnter(Item):
 
     def draw(self, screen, scroll):
         super().draw(screen, scroll)
-        ui.title(str(self.level), self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
+        ui.title(str(self.level), self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen, color=(30, 36, 74))
 
 
 class Lock(Item):

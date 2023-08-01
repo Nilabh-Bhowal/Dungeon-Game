@@ -33,7 +33,7 @@ class Enemy(entity.Entity):
         self.angle = -math.degrees(angle) - 90
         self.movement[0] = -math.cos(angle)
         self.movement[1] = -math.sin(angle)
-        
+
     def check_damaged(self, player, volume):
         if self.immune:
             self.immune_timer -= 1
@@ -44,7 +44,7 @@ class Enemy(entity.Entity):
         if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
             self.hurt_sound.set_volume(volume * 0.2)
             self.hurt_sound.play()
-            self.health -= random.randint(20, 40)
+            self.health -= player.active_item.damage
             self.stun(player.angle)
 
         if self.health <= 0:
@@ -60,7 +60,7 @@ class Enemy(entity.Entity):
 class Zombie(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y, 64, 64, 4, 550, 70, "zombie.png")
-        self.weapon = weapon.Sword(self, 10, 16)
+        self.weapon = weapon.Sword(self, 7, 16)
         self.attack = False
 
     def move(self, player, dt, rooms, volume):
@@ -82,7 +82,7 @@ class Zombie(Enemy):
 class Archer(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y, 64, 64, 4, 700, 70, "archer.png")
-        self.weapon = weapon.Bow(self, 10, 15)
+        self.weapon = weapon.Bow(self, 2, 15)
         self.attack = False
 
     def move(self, player, dt, rooms, volume):

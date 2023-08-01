@@ -2,7 +2,7 @@ import pygame
 import json
 
 import assets.scripts.dungeon as dungeon
-import assets.scripts.weapon as weapon
+import assets.scripts.boss as boss
 import assets.scripts.enemy as enemy
 import assets.scripts.ui as ui
 
@@ -26,6 +26,8 @@ def save(num, level, items):
             l = "zombie"
         if isinstance(item, enemy.Archer):
             l = "archer"
+        if isinstance(item, boss.Boss):
+            l = "boss"
         elif isinstance(item, dungeon.End):
             l = "end"
         if isinstance(item, dungeon.LevelEnter):
@@ -57,6 +59,8 @@ def load(num):
             things.append(enemy.Zombie(item["x"], item["y"]))
         elif item["type"] == "archer":
             things.append(enemy.Archer(item["x"], item["y"]))
+        elif item["type"] == "boss":
+            things.append(boss.Boss(item["x"], item["y"]))
         elif item["type"] == "end":
             things.append(dungeon.End(item["x"], item["y"]))
         elif item["type"] == "level enter":
@@ -155,7 +159,7 @@ enemies_button = ui.Button("Enemies", 1130, 300, 200, 25, "large")
 items_button = ui.Button("Items", 1130, 400, 200, 25, "large")
 
 rooms_list = ["dungeon", "corridor"]
-enemies_list = ["zombie", "archer"]
+enemies_list = ["zombie", "archer", "boss"]
 items_list = ["chest", "end", "lock", "level enter"]
 
 current_list = rooms_list
@@ -291,6 +295,8 @@ while running:
                     items.append(enemy.Zombie(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
                 elif current_list[current_item] == "archer":
                     items.append(enemy.Archer(round((pygame.mouse.get_pos()[0] + scroll[0] - 32) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
+                elif current_list[current_item] == "boss":
+                    items.append(boss.Boss(round((pygame.mouse.get_pos()[0] + scroll[0] - 128) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 128) / 32) * 32))
                 elif current_list[current_item] == "chest":
                     items.append(dungeon.Chest(round((pygame.mouse.get_pos()[
                                 0] + scroll[0] - 64) / 32) * 32, round((pygame.mouse.get_pos()[1] + scroll[1] - 32) / 32) * 32))
@@ -315,6 +321,9 @@ while running:
             elif current_list[current_item] == "archer":
                 s = pygame.surface.Surface((64, 64))
                 enemy.Archer(0, 0).draw(s, [0, 0])
+            elif current_list[current_item] == "boss":
+                s = pygame.surface.Surface((256, 256))
+                boss.Boss(0, 0).draw(s, [0, 0])
             elif current_list[current_item] == "chest":
                 s = pygame.surface.Surface((128, 64))
                 dungeon.Chest(0, 0).draw(s, [0, 0])

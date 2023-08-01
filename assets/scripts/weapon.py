@@ -59,7 +59,7 @@ class Bow(Weapon):
         super().__init__(holder, damage, 10, 15, "bow")
         self.sound = pygame.mixer.Sound("assets/sounds/effects/shoot.wav")
         self.speed = speed
-        self.strength = 45
+        self.strength = 5
         self.arrows = []
 
     def target(self, target_x, target_y):
@@ -73,7 +73,7 @@ class Bow(Weapon):
         angle = self.target(target_x, target_y)
         if self.mode == "attack":
             self.sound.play()
-            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed * self.strength / 60, self.strength / 2))
+            self.arrows.append(Arrow(self.holder.rect.centerx, self.holder.rect.centery, angle, self.speed * (self.strength / 3), self.damage * self.strength / 2))
             self.mode = "cooldown"
 
         for i, arrow in sorted(enumerate(self.arrows), reverse=True):

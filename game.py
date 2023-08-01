@@ -9,6 +9,7 @@ import assets.scripts.ui as ui
 import assets.scripts.dungeon as dungeon
 from assets.scripts.player import Player
 import assets.scripts.enemy as enemy
+import assets.scripts.boss as boss
 import assets.scripts.weapon as weapon
 import assets.scripts.particle as particle
 
@@ -26,8 +27,9 @@ controls = {"up": pygame.K_w, "down": pygame.K_s, "left": pygame.K_a, "right": p
 
 # create window
 display = pygame.display.set_mode((1280, 720))
+icon = pygame.image.load("assets/images/icon.ico")
 pygame.display.set_caption("Goofy Ahh Dungeon Game")
-pygame.display.set_icon(pygame.image.load("assets/images/entity/player.png").convert())
+pygame.display.set_icon(icon)
 screen = pygame.Surface((display_x, display_y))
 
 
@@ -44,6 +46,7 @@ def load_level(level):
     chests = []
     enemies = []
     end = None
+    bosses = None
 
     for item in data:
         if item["type"] == "room":
@@ -56,6 +59,8 @@ def load_level(level):
             enemies.append(enemy.Zombie(item["x"], item["y"]))
         elif item["type"] == "archer":
             enemies.append(enemy.Archer(item["x"], item["y"]))
+        elif item["type"] == "boss":
+            bosses = boss.Boss(item["x"], item["y"])
         elif item["type"] == "end":
             end = dungeon.End(item["x"], item["y"])
         elif item["type"] == "level enter":
@@ -64,7 +69,7 @@ def load_level(level):
             locks.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
 
     # spits out lists for level data
-    return rooms, chests, enemies, end, level_enters, locks
+    return rooms, chests, enemies, bosses, end, level_enters, locks
 
 # quit function
 def quit():
@@ -87,7 +92,7 @@ def main_menu(state):
 
     clock = pygame.time.Clock()
 
-    pygame.mixer.music.set_volume(0.25)
+    pygame.mixer.music.set_volume(0.125)
     pygame.mixer.music.play(-1)
 
     while state == "main menu":
@@ -120,7 +125,6 @@ def settings_menu():
     return_button = ui.Button("Return", 640, 360, 500, 50, "large")
     volume_button = ui.Button("Volume", 640, 435, 500, 50, "large")
     size_button = ui.Button("Size", 640, 510, 500, 50, "large")
-    controls_button = ui.Button("Controls", 640, 585, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -146,8 +150,6 @@ def settings_menu():
             volume_menu()
         if size_button.draw(screen, volume, scaled_mouse_pos):
             size_menu()
-        if controls_button.draw(screen, volume, scaled_mouse_pos):
-            controls_menu()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
@@ -248,45 +250,6 @@ def size_menu():
                 display_x = display.get_width()
                 display_y = display.get_height()
                 click_timer = 15
-        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
-
-        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
-        pygame.display.update()
-
-        clock.tick(60)
-
-    if quitted:
-        quit()
-
-def controls_menu():
-    global controls
-    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
-
-    keybind_options = [
-        ui.KeybindChanger(640, 435 + y * 60, control, controls[control])
-        for y, control in enumerate(controls.keys())
-    ]
-    cursor = pygame.image.load("assets/images/cursor.png")
-    cursor.set_colorkey((255, 255, 255))
-    pygame.mouse.set_visible(False)
-
-    clock = pygame.time.Clock()
-
-    in_menu = True
-    quitted = False
-    while in_menu:
-        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                in_menu = False
-                quitted = True
-            controls[keybind.text] = keybind.handle_input(event, scaled_mouse_pos)
-        screen.fill((96, 178, 124))
-        ui.title("Settings",  640, 200, screen)
-        if return_button.draw(screen, volume, scaled_mouse_pos):
-            in_menu = False
-        for keybind in keybind_options:
-            keybind.draw(screen)
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
@@ -498,7 +461,7 @@ def lobby(state):  # sourcery skip: low-code-quality
     pause_button = ui.Button("", 20, 20, 32, 32, "pause")
 
     # load level from file
-    rooms, _, enemies, _, level_enters, locks = load_level(0)
+    rooms, _, enemies, _, _, level_enters, locks = load_level(0)
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
@@ -613,7 +576,7 @@ def game_loop(state):
     restart = False
 
     # load level from file
-    rooms, chests, enemies, end, _, locks = load_level(level)
+    rooms, chests, enemies, boss, end, _, locks = load_level(level)
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
@@ -639,7 +602,7 @@ def game_loop(state):
     while state == f"level {level}" and not restart:
 
         explosion_sound.set_volume(volume / 2)
-        pygame.mixer.music.set_volume(volume / 2)
+        pygame.mixer.music.set_volume(volume / 4)
 
         for event in pygame.event.get():
             # check if player quits
@@ -661,7 +624,7 @@ def game_loop(state):
 
             if event.type == pygame.MOUSEBUTTONUP and (isinstance(player.active_item, weapon.Bow)) and (player.active_item.mode == "load"):
                 player.active_item.mode = "attack"
-                player.active_item.strength = min(hold_timer * 2, 60)
+                player.active_item.strength = min(hold_timer / 20, 3)
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
@@ -733,6 +696,15 @@ def game_loop(state):
                 e.stun(-e.angle)
                 break
 
+        if boss:
+            boss_shake, death_particles, boss_enemies = boss.update(player, rooms, volume, death_particles, dt)
+            shake = shake or boss_shake
+            for e in boss_enemies:
+                enemies.append(e)
+            if boss.health <= 0:
+                shake = True
+                fade = True
+
         end.update(dt)
 
         if player.state == "stunned" and shake_timer == 0 and not shake:
@@ -770,6 +742,8 @@ def game_loop(state):
         player.draw(screen, scroll)
         for e in enemies:
             e.draw(screen, scroll)
+        if boss:
+            boss.draw(screen, scroll)
         death_particles.draw(screen, scroll)
 
 
@@ -802,7 +776,7 @@ def game_loop(state):
 
 # set the state of the window
 state = "main menu"
-keys = ["20"]
+keys = ["20", "30"]
 running = True
 while running:
     if state == "main menu":

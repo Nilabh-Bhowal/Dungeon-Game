@@ -1,9 +1,9 @@
 import pygame
 
 
-def title(text, x, y, screen):
+def title(text, x, y, screen, color=(229, 217, 156)):
     font = pygame.font.Font("assets/fonts/PressStart2P.ttf", 40)
-    text = font.render(text, True, (0, 0, 0))
+    text = font.render(text, True, color)
     text_rect = text.get_rect()
     screen.blit(text, (x - text_rect.width // 2, y - text_rect.height // 2))
 
@@ -136,9 +136,9 @@ class Slider:
 
     def draw(self, screen, scaled_mouse_pos):
         self.handle_input(scaled_mouse_pos)
-        pygame.draw.rect(screen, (200, 200, 200), self.rect)
-        scale = pygame.draw.line(screen, (0, 0, 0), (self.rect.left + 25, self.rect.centery), (self.rect.right - 25, self.rect.centery), 5)
-        pygame.draw.circle(screen, (120, 120, 120), self.dial.center, self.dial.width / 2)
+        pygame.draw.rect(screen, (229, 217, 156), self.rect)
+        scale = pygame.draw.line(screen, (30, 36, 74), (self.rect.left + 25, self.rect.centery), (self.rect.right - 25, self.rect.centery), 5)
+        pygame.draw.circle(screen, (96, 153, 116), self.dial.center, self.dial.width / 2)
         self.value = int((self.dial.centerx - scale.x) / scale.width * self.scale)
         return self.value
 
@@ -164,7 +164,7 @@ class KeybindChanger:
 
     def draw(self, screen):
         if self.active:
-            pygame.draw.rect(screen, (250, 250, 250), self.rect)
+            pygame.draw.rect(screen, (229, 217, 156), self.rect)
         else:
-            pygame.draw.rect(screen, (210, 210, 210), self.rect)
+            pygame.draw.rect(screen, (214, 169, 126), self.rect)
         title(f"{self.text}      {self.value_display}", self.rect.centerx, self.rect.centery, screen)
