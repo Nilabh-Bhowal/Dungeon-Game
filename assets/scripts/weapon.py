@@ -118,8 +118,3 @@ class Arrow:
     def draw(self, screen, scroll):
         draw_surf = pygame.transform.rotate(self.animation.get_image(), -self.angle - 90)
         screen.blit(draw_surf, ((self.rect.centerx - scroll[0]) - (draw_surf.get_width() / 2), (self.rect.centery - scroll[1]) - (draw_surf.get_height() / 2)))
-
-
-class Fireball(Arrow):
-    def __init__(self, x, y, angle):
-        super().__init__(x, y, angle, 16, 15)

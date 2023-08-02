@@ -30,9 +30,6 @@ class TileManager:
                         if not tile["bottom"] and (room.rect.colliderect(tile_rect.move(0, 5)) or y < self.rect.height // 32 - 1):
                             tile["bottom"] = True
 
-                        if tile["left"] and tile["right"] and tile["top"] and tile["bottom"]:
-                            tile["surround"] = True
-
         self.add_to_map()
 
     def add_to_map(self):

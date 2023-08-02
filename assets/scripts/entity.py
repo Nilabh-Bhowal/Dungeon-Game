@@ -28,12 +28,14 @@ class Entity:
     def move(self, dt, rooms):
         self.rect.x += self.speed * self.movement[0] * dt
         self.rect.y += self.speed * self.movement[1] * dt
+        if self.health <= 0:
+            self.alive = False
         if self.state == "stunned":
             self.movement = [0, 0]
             dx = math.cos(math.radians(self.knockback_angle - 90))
             dy = -math.sin(math.radians(self.knockback_angle - 90))
-            self.rect.x += dx * self.immune_timer * dt
-            self.rect.y += dy * self.immune_timer * dt
+            self.rect.x += dx * self.immune_timer * dt / 1.5
+            self.rect.y += dy * self.immune_timer * dt / 1.5
         dungeon.collide(self, rooms, dt)
 
     def draw(self, screen, scroll):

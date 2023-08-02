@@ -81,7 +81,7 @@ class Zombie(Enemy):
 
 class Archer(Enemy):
     def __init__(self, x, y):
-        super().__init__(x, y, 64, 64, 4, 700, 70, "archer.png")
+        super().__init__(x, y, 64, 64, 1, 600, 70, "archer.png")
         self.weapon = weapon.Bow(self, 2, 15)
         self.attack = False
 

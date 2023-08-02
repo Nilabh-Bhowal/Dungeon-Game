@@ -28,7 +28,7 @@ controls = {"up": pygame.K_w, "down": pygame.K_s, "left": pygame.K_a, "right": p
 # create window
 display = pygame.display.set_mode((1280, 720))
 icon = pygame.image.load("assets/images/icon.ico")
-pygame.display.set_caption("Goofy Ahh Dungeon Game")
+pygame.display.set_caption("Blob Quest")
 pygame.display.set_icon(icon)
 screen = pygame.Surface((display_x, display_y))
 
@@ -105,7 +105,7 @@ def main_menu(state):
         screen.fill((96, 178, 124))
         screen.blit(splash, (0, 0))
         screen.blit(shade, (0, 0))
-        ui.title("Goofy Ahh Dungeon Game", 640, 200, screen)
+        ui.title("Blob Quest", 640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
         if quit_button.draw(screen, volume, scaled_mouse_pos):
@@ -279,7 +279,7 @@ def game_over(state, level):
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((96, 178, 124))
-        ui.title("You Ded",  640, 200, screen)
+        ui.title("You Got Slain",  640, 200, screen)
         if play_button.draw(screen, volume, scaled_mouse_pos):
             state = f"level {level}"
         if lobby_button.draw(screen, volume, scaled_mouse_pos):
@@ -316,7 +316,7 @@ def win(state, level):
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((96, 178, 124))
-        ui.title("levil complet",  640, 200, screen)
+        ui.title("Level Complete!",  640, 200, screen)
         if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
         if quit_button.draw(screen, volume, scaled_mouse_pos):
@@ -431,6 +431,19 @@ def open_chest(inventory, items):
                 quit()
 
             if event.type == pygame.KEYDOWN and event.key == controls["inventory"]:
+                if item_carrying != "empty":
+                    found_slot = False
+                    counter = inventory.active_slot
+                    while not found_slot:
+                        if inventory.hotbar[counter] == "empty":
+                            inventory.hotbar[counter] = item_carrying
+                            found_slot = True
+                        else:
+                            counter += 1
+                        if counter > 3:
+                            counter = 0
+
+
                 inventory_open = False
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
@@ -534,7 +547,6 @@ def lobby(state):  # sourcery skip: low-code-quality
             lock.draw(screen, scroll)
         player.draw(screen, scroll)
 
-        ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
         if pause_button.draw(screen, volume, scaled_mouse_pos):
             state = lobby_pause(state)
             pt = time.time()
@@ -642,28 +654,21 @@ def game_loop(state):
             player.switched = True
         elif key_pressed[pygame.K_4]:
             player.inventory.active_slot = 3
-            player.switched = True
-        elif key_pressed[pygame.K_5]:
-            player.inventory.active_slot = 4
-            player.switched = True
-        elif key_pressed[pygame.K_6]:
-            player.inventory.active_slot = 5
-            player.switched = True
-        elif key_pressed[pygame.K_7]:
-            player.inventory.active_slot = 6
-            player.switched = True
-        elif key_pressed[pygame.K_8]:
-            player.inventory.active_slot = 7
-            player.switched = True
-        elif key_pressed[pygame.K_9]:
-            player.inventory.active_slot = 8
-            player.switched = True
 
         # sets the scroll value
         true_scroll[0] += ((player.rect.x - (1280 / 2 - player.rect.width / 2)
                         - true_scroll[0]) / 25 * dt) + 10 * math.sin(5 * int(shake_timer))
         true_scroll[1] += ((player.rect.y - (720 / 2 - player.rect.height / 2)
                         - true_scroll[1]) / 25 * dt) + 2 * math.sin(5 * int(shake_timer))
+        if boss and (boss.bossfight):
+            if true_scroll[0] > boss.rect.centerx + 1024:
+                true_scroll[0] = boss.rect.centerx + 1024
+            elif true_scroll[0] < boss.rect.centerx - 1024:
+                true_scroll[0] = boss.rect.centerx - 1024
+            if true_scroll[1] > boss.rect.centery + 1024:
+                true_scroll[1] = boss.rect.centery + 1024
+            elif true_scroll[1] < boss.rect.centery - 1024:
+                true_scroll[1] = boss.rect.centery - 1024
 
         scroll = [int(true_scroll[0]), int(true_scroll[1])]
 
@@ -697,28 +702,32 @@ def game_loop(state):
                 break
 
         if boss:
-            boss_shake, death_particles, boss_enemies = boss.update(player, rooms, volume, death_particles, dt)
+            boss_shake, boss_enemies, boss_dead = boss.update(player, rooms, volume, dt)
             shake = shake or boss_shake
             for e in boss_enemies:
                 enemies.append(e)
-            if boss.health <= 0:
+            if boss_dead:
                 shake = True
                 fade = True
 
-        end.update(dt)
+        if end:
+            end.update(dt)
 
         if player.state == "stunned" and shake_timer == 0 and not shake:
             shake = True
-        if player.health <= 0 and not fade:
-            state = "game over"
-        if player.rect.colliderect(end.rect):
+        if not player.alive and not fade:
+            fade = True
+        if end and (player.rect.colliderect(end.rect)):
             fade = True
 
         if fade:
             a += 5 * dt
         if a >= 255:
-            state = "win"
-            keys.append(f"{level + 1}0")
+            if player.alive:
+                state = "win"
+                keys.append(f"{level + 1}0")
+            else:
+                state = "game over"
 
 
         if shake:
@@ -736,7 +745,8 @@ def game_loop(state):
             room.draw(screen, scroll)
         for chest in chests:
             chest.draw(screen, scroll)
-        end.draw(screen, scroll)
+        if end:
+            end.draw(screen, scroll)
         for lock in locks:
             lock.draw(screen, scroll)
         player.draw(screen, scroll)
@@ -754,7 +764,6 @@ def game_loop(state):
             state, restart = paused(state)
             pt = time.time()
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
-        ui.title(f"f: {int(clock.get_fps())}", 1100, 50, screen)
 
         fade_surf.set_alpha(a)
         fade_surf.fill((255, 255, 255))
@@ -776,7 +785,7 @@ def game_loop(state):
 
 # set the state of the window
 state = "main menu"
-keys = ["20", "30"]
+keys = []
 running = True
 while running:
     if state == "main menu":
