@@ -796,9 +796,10 @@ async def game_loop(state):
     return state, level
 
 # set the state of the window
+keys = []
 async def main():
+    global keys
     state = "main menu"
-    keys = []
     running = True
     while running:
         if state == "main menu":

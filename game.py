@@ -563,6 +563,7 @@ def lobby(state):  # sourcery skip: low-code-quality
         prev_pos = player.rect.topleft
         now = time.time()
         dt = (now - pt) * 60
+        dt = min(dt, 4)
         pt = now
 
     return state
@@ -778,6 +779,7 @@ def game_loop(state):
         prev_pos = player.rect.topleft
         now = time.time()
         dt = (now - pt) * 60
+        dt = min(dt, 4)
         pt = now
 
     pygame.mixer.music.fadeout(1000)

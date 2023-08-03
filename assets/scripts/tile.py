@@ -1,5 +1,4 @@
 import pygame
-import os
 import json
 
 class TileManager:
@@ -9,11 +8,10 @@ class TileManager:
         with open(f"{self.tile_path}/tile_types.json", "r") as f:
             tiles = json.load(f)
         self.tiles = {}
-        for number, image in enumerate(os.listdir(self.tile_path)):
-            if image.endswith("png"):
-                self.tiles[f"{list(tiles.keys())[number]}"] = pygame.transform.scale(pygame.image.load(f"{self.tile_path}/{image}").convert(), (32, 32))
+        for img in list(tiles.keys()):
+            self.tiles[img] = pygame.transform.scale(pygame.image.load(f"{self.tile_path}/{tiles[img]}.png"), (32, 32))
 
-        self.tile_map = [[{"type": "empty", "top": False, "bottom": False, "left": False, "right": False} for _ in range(self.rect.width // 32)] for _ in range(self.rect.height // 32)]
+        self.tile_map = [[{"type": "empty", "top": False, "bottom": False, "left": False, "right": False, "topleft": True, "topright": True, "bottomleft": True, "bottomright": True} for _ in range(self.rect.width // 32)] for _ in range(self.rect.height // 32)]
 
     def load_rooms(self, rooms):
         for y, row in enumerate(self.tile_map):
@@ -29,6 +27,15 @@ class TileManager:
                             tile["top"] = True
                         if not tile["bottom"] and (room.rect.colliderect(tile_rect.move(0, 5)) or y < self.rect.height // 32 - 1):
                             tile["bottom"] = True
+                    if tile["bottom"] and tile["top"] and tile["left"] and tile["right"]:
+                        if tile["topleft"] and (room.rect.colliderect(tile_rect.move(-35, -35)) or (y != 0)):
+                            tile["topleft"] = False
+                        if tile["topright"] and (room.rect.colliderect(tile_rect.move(35, -35)) or (y != 0)):
+                            tile["topright"] = False
+                        if tile["bottomleft"] and (room.rect.colliderect(tile_rect.move(-35, 35)) or (y != self.rect.height // 32 - 1)):
+                            tile["bottomleft"] = False
+                        if tile["bottomright"] and (room.rect.colliderect(tile_rect.move(35, 35)) or (y != self.rect.height // 32 - 1)):
+                            tile["bottomright"] = False
 
         self.add_to_map()
 
@@ -36,7 +43,16 @@ class TileManager:
         for row in self.tile_map:
             for tile in row:
                 if tile["bottom"] and tile["top"] and tile["left"] and tile["right"]:
-                    tile["type"] = "center"
+                    if tile["topleft"] and not tile["topright"]:
+                        tile["type"] = "topleftcenter"
+                    elif tile["topright"]:
+                        tile["type"] = "toprightcenter"
+                    elif tile["bottomleft"] and not tile["bottomright"]:
+                        tile["type"] = "bottomleftcenter"
+                    elif tile["bottomright"]:
+                        tile["type"] = "bottomrightcenter"
+                    else:
+                        tile["type"] = "center"
                 elif tile["bottom"] and not tile["top"]:
                     if tile["right"] and not tile["left"]:
                         tile["type"] = "topleft"
