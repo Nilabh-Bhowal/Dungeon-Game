@@ -7,9 +7,5 @@
         "topleft": "5",
         "topright": "6",
         "bottomleft": "7",
-        "bottomright": "8",
-        "topleftcenter": "9",
-        "toprightcenter": "10",
-        "bottomleftcenter": "11",
-        "bottomrightcenter": "12"
+        "bottomright": "8"
 }

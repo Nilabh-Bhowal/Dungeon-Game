@@ -5,10 +5,10 @@
     },
     {
         "name": "attack",
-        "length": 8
+        "length": 60
     },
     {
         "name": "load",
-        "length": 60
+        "length": 30
     }
 ]

@@ -84,6 +84,7 @@ class Archer(Enemy):
         super().__init__(x, y, 64, 64, 1, 600, 70, "archer.png")
         self.weapon = weapon.Bow(self, 2, 15)
         self.attack = False
+        self.attack_timer = 0
 
     def move(self, player, dt, rooms, volume):
         if self.state == "target":
@@ -93,7 +94,10 @@ class Archer(Enemy):
         self.weapon.update(player.rect.centerx + random.randint(-32, 32), player.rect.centery + random.randint(-32, 32), [player], dt, rooms, volume)
 
     def strike(self):
-        if self.weapon.mode == "held" and random.randint(0, 120) == 0:
+        self.attack_timer += 1
+        if self.attack_timer >= random.randint(60, 90):
+            self.attack_timer = 0
+        if self.weapon.mode == "held" and self.attack_timer == 0:
             self.weapon.mode = "attack"
 
     def draw(self, screen, scroll):

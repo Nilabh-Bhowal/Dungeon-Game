@@ -30,7 +30,7 @@ class Boss(entity.Entity):
             dx = math.cos(angle)
             dy = math.sin(angle)
             self.enemies.append(enemy.Zombie(dx * self.rect.width + self.rect.centerx, dy * self.rect.height + self.rect.centery))
-        for _ in range(random.randint(0, 2)):
+        for _ in range(random.randint(0, 1)):
             angle = random.randint(0, 360)
             dx = math.cos(angle)
             dy = math.sin(angle)
@@ -61,7 +61,7 @@ class Boss(entity.Entity):
                     player.rect.centery = self.rect.centery - 1024
             if self.immune and self.alive and math.hypot(player.rect.y - self.rect.y, player.rect.x - self.rect.x) < 1024 and self.health >= 0:
                 self.bossfight = True
-                if random.randint(0, 500) <= self.wave_timer / 5 and self.attacks_used <= 4:
+                if random.randint(0, 500) <= self.wave_timer / 5 and self.attacks_used <= 2:
                     self.attacks = "monsters"
                 self.attack()
                 if self.wave_timer >= 1000:

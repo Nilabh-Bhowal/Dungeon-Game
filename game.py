@@ -637,7 +637,7 @@ def game_loop(state):
 
             if event.type == pygame.MOUSEBUTTONUP and (isinstance(player.active_item, weapon.Bow)) and (player.active_item.mode == "load"):
                 player.active_item.mode = "attack"
-                player.active_item.strength = min(hold_timer / 20, 3)
+                player.active_item.strength = min(hold_timer / 15, 4)
 
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
@@ -787,7 +787,7 @@ def game_loop(state):
 
 # set the state of the window
 state = "main menu"
-keys = []
+keys = ["20", "50"]
 running = True
 while running:
     if state == "main menu":
