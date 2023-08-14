@@ -478,9 +478,25 @@ def lobby(state):  # sourcery skip: low-code-quality
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
+    curr_enter = 0
+    for enter in level_enters:
+        if f"{enter.level}0" in keys:
+            curr_enter = max(curr_enter, int(enter.level))
+
+    if curr_enter == 0:
+        exited = True
+        player = Player(state, keys)
+    else:
+        exited = False
+        for enter in level_enters:
+            print(enter.level)
+            if enter.level == curr_enter - 1:
+                player = Player(state, keys, x=enter.rect.centerx - 32, y=enter.rect.centery - 32)
+
+    print(curr_enter)
+
     # initialize objects
-    player = Player(state, keys)
-    prev_pos = [0, 0]
+    prev_pos = [player.rect.x, player.rect.y]
 
     true_scroll = [-player.rect.x, -player.rect.y]
     scroll = [0, 0]
@@ -522,12 +538,13 @@ def lobby(state):  # sourcery skip: low-code-quality
             player.rect.topleft = prev_pos
         for lock in locks:
             lock.check_collision(player)
-        if not fade:
+        if not fade and exited:
             for level_enter in level_enters:
                 level = level_enter.check_collision(player)
                 if isinstance(level, int):
                     fade = True
                     break
+        exited = not any(enter.rect.colliderect(player.rect) for enter in level_enters)
 
         if fade:
             a += 5 * dt
@@ -787,7 +804,7 @@ def game_loop(state):
 
 # set the state of the window
 state = "main menu"
-keys = ["20", "50"]
+keys = []
 running = True
 while running:
     if state == "main menu":

@@ -7,8 +7,8 @@ import assets.scripts.particle as particle
 
 # player class
 class Player(entity.Entity):
-    def __init__(self, state, keys):
-        super().__init__(0, 0, 64, 64, 10, 100, "player.png")
+    def __init__(self, state, keys, x=0, y=0):
+        super().__init__(x, y, 64, 64, 10, 100, "player.png")
         self.state = "active"
         self.attack = False
         self.pickup = False

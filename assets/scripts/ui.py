@@ -168,3 +168,8 @@ class KeybindChanger:
         else:
             pygame.draw.rect(screen, (214, 169, 126), self.rect)
         title(f"{self.text}      {self.value_display}", self.rect.centerx, self.rect.centery, screen)
+
+
+class Popup:
+    def __init__(self, y, text):
+        pass
