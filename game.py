@@ -18,15 +18,14 @@ pygame.init()
 pygame.mixer.init()
 pygame.display.init()
 
-display_x = 1280
-display_y = 720
-
 volume = 1.0
 
 controls = {"up": pygame.K_w, "down": pygame.K_s, "left": pygame.K_a, "right": pygame.K_d, "inventory": pygame.K_e}
 
 # create window
 display = pygame.display.set_mode((1280, 720))
+display_x = display.get_width()
+display_y = display.get_height()
 icon = pygame.image.load("assets/images/icon.ico")
 pygame.display.set_caption("Blob Quest")
 pygame.display.set_icon(icon)
@@ -78,6 +77,10 @@ def quit():
 
 # main menu function
 def main_menu(state):
+    global display, display_x, display_y
+    display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    display_x = display.get_width()
+    display_y = display.get_height()
     play_button = ui.Button("Play", 640, 360, 500, 50, "large")
     quit_button = ui.Button("Quit", 640, 435, 500, 50, "large")
 
@@ -112,7 +115,9 @@ def main_menu(state):
             state = "quit"
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
+
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        print(pygame.transform.scale(screen, (display_x, display_y)))
         pygame.display.update()
 
         clock.tick(60)
