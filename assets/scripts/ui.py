@@ -171,5 +171,17 @@ class KeybindChanger:
 
 
 class Popup:
-    def __init__(self, y, text):
-        pass
+    def __init__(self, text):
+        self.rect = pygame.Rect(608, 480, 64, 64)
+        self.draw_y = 720
+        self.text = text
+        self.img = pygame.image.load("assets/images/buttons/popup.png")
+        self.pop = False
+
+    def draw(self, screen):
+        if self.pop:
+            self.draw_y = min(self.draw_y + 5, self.rect.y)
+        else:
+            self.draw_y = max(self.draw_y - 5, 720)
+        screen.blit(self.img, (self.rect.x, self.draw_y))
+        title(self.text, self.rect.centerx, self.draw_y + 32, screen, color=(30, 36, 74))
