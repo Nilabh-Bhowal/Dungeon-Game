@@ -522,7 +522,7 @@ def open_chest(inventory, items):
     return inventory, items
 
 
-def lobby(state):  # sourcery skip: low-code-quality
+def lobby(state, prev_level):  # sourcery skip: low-code-quality
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -539,19 +539,14 @@ def lobby(state):  # sourcery skip: low-code-quality
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
-    curr_enter = 0
-    for enter in level_enters:
-        if f"{enter.level}0" in keys:
-            curr_enter = max(curr_enter, int(enter.level))
-
-    if curr_enter == 0:
+    if prev_level:
+        for enter in level_enters:
+            if int(enter.level) == prev_level:
+                exited = False
+                player = Player(state, keys, x=enter.rect.centerx - 32, y=enter.rect.centery - 32)
+    else:
         exited = True
         player = Player(state, keys)
-    else:
-        exited = False
-        for enter in level_enters:
-            if enter.level == curr_enter - 1:
-                player = Player(state, keys, x=enter.rect.centerx - 32, y=enter.rect.centery - 32)
 
     # initialize objects
     prev_pos = [player.rect.x, player.rect.y]
@@ -922,13 +917,15 @@ def game_loop(state, checkpoint):
 # set the state of the window
 state = "main menu"
 checkpoint = None
+level = None
 keys = ["20", "40", "50"]
 running = True
 while running:
     if state == "main menu":
         state = main_menu(state)
     elif state == "lobby":
-        state = lobby(state)
+        state = lobby(state, level)
+        checkpoint = None
     elif state[:5] == "level":
         state, level, checkpoint = game_loop(state, checkpoint)
     elif state == "win":

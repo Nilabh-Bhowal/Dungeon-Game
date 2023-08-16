@@ -16,7 +16,10 @@ class Enemy(entity.Entity):
         self.range = range
 
     def move(self, player, dt, rooms, volume):
+        prev_pos = self.rect.topleft
         super().move(dt, rooms)
+        if math.hypot(self.rect.x - prev_pos[0], self.rect.y - prev_pos[1]) > 15 * math.sqrt(2) * dt + 2:
+            self.rect.topleft = prev_pos
         self.check_damaged(player, volume)
 
         if self.state == "target":
