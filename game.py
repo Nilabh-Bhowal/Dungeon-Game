@@ -747,8 +747,6 @@ def game_loop(state, checkpoint):
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
         movement = [0, 0]
-        if key_pressed[pygame.K_r]:
-            player.health = 0
         movement[0] = key_pressed[controls["right"]] - key_pressed[controls["left"]]
         movement[1] = key_pressed[controls["down"]] - key_pressed[controls["up"]]
 
@@ -918,7 +916,7 @@ def game_loop(state, checkpoint):
 state = "main menu"
 checkpoint = None
 level = None
-keys = ["20", "40", "50"]
+keys = []
 running = True
 while running:
     if state == "main menu":
