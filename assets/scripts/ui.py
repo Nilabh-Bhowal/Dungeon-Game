@@ -171,12 +171,12 @@ class KeybindChanger:
 
 
 class Popup:
-    def __init__(self, text):
-        self.rect = pygame.Rect(608, 480, 64, 64)
+    def __init__(self, text, x=608, y=480):
+        self.rect = pygame.Rect(x, y, 64, 64)
         self.draw_y = 720
         self.text = text
         self.img = pygame.image.load("assets/images/buttons/popup.png")
-        self.pop = False
+        self.pop = True
 
     def draw(self, screen):
         if self.pop:

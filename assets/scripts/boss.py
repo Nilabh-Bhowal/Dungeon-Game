@@ -5,6 +5,7 @@ import random
 import assets.scripts.entity as entity
 import assets.scripts.enemy as enemy
 import assets.scripts.particle as particle
+import assets.scripts.weapon as weapon
 
 class Boss(entity.Entity):
     def __init__(self, x, y):
@@ -68,7 +69,7 @@ class Boss(entity.Entity):
                     self.attacks_used = 0
                     self.immune = False
 
-            if player.attack and not self.immune and self.rect.colliderect(player.active_item.rect):
+            if (player.attack or (isinstance(player.active_item, weapon.Bow) and (any(arrow.rect.colliderect(self.rect) for arrow in player.active_item.arrows)))) and not self.immune and (isinstance(player.active_item, weapon.Bow) or self.rect.colliderect(player.active_item.rect)):
                 self.hurt_sound.set_volume(volume * 0.4)
                 self.hurt_sound.play()
                 self.health -= player.active_item.damage

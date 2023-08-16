@@ -135,6 +135,37 @@ class Lock(Item):
                 ui.title(self.key, self.rect.centerx - scroll[0], self.rect.centery - scroll[1], screen)
 
 
+class Checkpoint(Item):
+    def __init__(self, x, y, id):
+        super().__init__(x, y, 128, 128, "checkpoint")
+        self.id = id
+        self.passed = False
+        self.particles = particle.ParticleEmitter()
+        self.timer = 0
+
+    def check_passed(self, player, checkpoint):
+        print(int(checkpoint))
+        if int(checkpoint) >= int(self.id) and not self.passed:
+            self.animation.change_animation("passed")
+            self.passed = True
+        elif player.rect.colliderect(self.rect) and not self.passed:
+            self.animation.change_animation("passed")
+            self.passed = True
+            return True
+        return False
+
+    def update(self, player, dt, checkpoint):
+        self.timer += 1
+        if self.timer >= 10:
+            self.timer = 0
+            self.particles.add_particle(self.rect.centerx, self.rect.centery,(240, 229, 197), 10, random.uniform(-1, 1), random.uniform(-1, 1), 1.5, 0.2)
+        self.particles.update(dt)
+        return self.check_passed(player, checkpoint)
+
+    def draw(self, screen, scroll):
+        super().draw(screen, scroll)
+        self.particles.draw(screen, scroll)
+
 def can_pass(player, current_room, rooms):
     # sourcery skip: instance-method-first-arg-name
     passable = {"up": False, "down": False, "left": False, "right": False}

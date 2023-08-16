@@ -1,3 +1,4 @@
+import time
 import pygame
 import json
 
@@ -34,6 +35,8 @@ def save(num, level, items):
             data.append({"type": "level enter", "x": item.rect.x, "y": item.rect.y, "level": item.level})
         elif isinstance(item, dungeon.Lock):
             data.append({"type": "lock", "x": item.rect.x, "y": item.rect.y, "key": str(item.key)})
+        elif isinstance(item, dungeon.Checkpoint):
+            data.append({"type": "checkpoint", "x": item.rect.x, "y": item.rect.y, "id": str(item.id)})
         elif isinstance(item, dungeon.Chest):
             data.append({"type": "chest", "x": item.rect.x, "y": item.rect.y, "space": item.items.space})
         else:
@@ -67,6 +70,8 @@ def load(num):
             things.append(dungeon.LevelEnter(item["x"], item["y"], item["level"]))
         elif item["type"] == "lock":
             things.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
+        elif item["type"] == "checkpoint":
+            things.append(dungeon.Checkpoint(item["x"], item["y"], str(item["id"])))
 
     return level, things
 
@@ -160,7 +165,7 @@ items_button = ui.Button("Items", 1130, 400, 200, 25, "large")
 
 rooms_list = ["dungeon", "corridor"]
 enemies_list = ["zombie", "archer", "boss"]
-items_list = ["chest", "end", "lock", "level enter"]
+items_list = ["chest", "end", "lock", "level enter", "checkpoint"]
 
 current_list = rooms_list
 current_item = 0
@@ -168,15 +173,22 @@ current_item = 0
 lock_prompt = ui.PromptBox("What is the key?")
 lock_prompt.prompted = True
 
+checkpoint_prompt = ui.PromptBox("What is the id?")
+checkpoint_prompt.prompted = True
+
+pt = time.time()
+dt = 1
+
 running = True
 while running:
 
     for event in pygame.event.get():
         lock_prompt.handle_input(event)
+        checkpoint_prompt.handle_input(event)
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.KEYDOWN and lock_prompt.prompted:
+        if event.type == pygame.KEYDOWN and lock_prompt.prompted and checkpoint_prompt.prompted:
             if event.key == pygame.K_RIGHT:
                 cam_movement[0] = 1
             if event.key == pygame.K_LEFT:
@@ -307,6 +319,9 @@ while running:
                 elif current_list[current_item] == "lock":
                     pos = pygame.mouse.get_pos()
                     lock_prompt.prompt()
+                elif current_list[current_item] == "checkpoint":
+                    pos = pygame.mouse.get_pos()
+                    checkpoint_prompt.prompt()
         else:
 
             if current_list[current_item] == "dungeon":
@@ -336,6 +351,9 @@ while running:
             elif current_list[current_item] == "lock":
                 s = pygame.surface.Surface((256, 64))
                 dungeon.Lock(0, 0, None).draw(s, [0, 0])
+            elif current_list[current_item] == "checkpoint":
+                s = pygame.surface.Surface((128, 128))
+                dungeon.Checkpoint(0, 0, None).draw(s, [0, 0])
             s.set_alpha(128)
 
 
@@ -356,8 +374,8 @@ while running:
     for item in reversed(items):
         check_collision(item, items, scroll)
 
-    scroll[0] += cam_movement[0] * 20
-    scroll[1] += cam_movement[1] * 20
+    scroll[0] += cam_movement[0] * 20 * dt
+    scroll[1] += cam_movement[1] * 20 * dt
 
     screen.fill((117, 201, 151))
 
@@ -406,9 +424,23 @@ while running:
         items.append(lock_item)
         lock_prompt.input = ""
 
+    output = checkpoint_prompt.draw(screen)
+    if output:
+        checkpoint_prompt.prompted = True
+        item = dungeon.Checkpoint(round(((pos[0] + scroll[0]) - (128 / 2)) / 32) * 32,
+                                 round(((pos[1] + scroll[1]) - (128 / 2)) / 32) * 32,
+                                 output)
+        items.append(item)
+        checkpoint_prompt.input = ""
+
     lock_prompt.draw(screen)
+    checkpoint_prompt.draw(screen)
 
     pygame.display.update()
     clock.tick(60)
+    now = time.time()
+    dt = (now - pt) * 60
+    dt = min(dt, 4)
+    pt = now
 
 pygame.quit()

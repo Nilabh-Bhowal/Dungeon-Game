@@ -45,6 +45,7 @@ def load_level(level):
     locks = []
     chests = []
     enemies = []
+    checkpoints = []
     end = None
     bosses = None
 
@@ -67,9 +68,11 @@ def load_level(level):
             level_enters.append(dungeon.LevelEnter(item["x"], item["y"], item["level"]))
         elif item["type"] == "lock":
             locks.append(dungeon.Lock(item["x"], item["y"], str(item["key"])))
+        elif item["type"] == "checkpoint":
+            checkpoints.append(dungeon.Checkpoint(item["x"], item["y"], str(item["id"])))
 
     # spits out lists for level data
-    return rooms, chests, enemies, bosses, end, level_enters, locks
+    return rooms, chests, enemies, bosses, end, level_enters, locks, checkpoints
 
 # quit function
 def quit():
@@ -79,7 +82,7 @@ def quit():
 # main menu function
 def main_menu(state):
     global display, display_x, display_y
-    display = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+    display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     display_x = display.get_width()
     display_y = display.get_height()
     play_button = ui.Button("Play", 640, 360, 500, 50, "large")
@@ -118,7 +121,6 @@ def main_menu(state):
 
 
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
-        print(pygame.transform.scale(screen, (display_x, display_y)))
         pygame.display.update()
 
         clock.tick(60)
@@ -129,8 +131,9 @@ def main_menu(state):
 
 def settings_menu():
     return_button = ui.Button("Return", 640, 360, 500, 50, "large")
-    volume_button = ui.Button("Volume", 640, 435, 500, 50, "large")
-    size_button = ui.Button("Size", 640, 510, 500, 50, "large")
+    controls_button = ui.Button("Controls", 640, 435, 500, 50, "large")
+    volume_button = ui.Button("Volume", 640, 510, 500, 50, "large")
+    size_button = ui.Button("Size", 640, 585, 500, 50, "large")
 
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
@@ -156,6 +159,54 @@ def settings_menu():
             volume_menu()
         if size_button.draw(screen, volume, scaled_mouse_pos):
             size_menu()
+        if controls_button.draw(screen, volume, scaled_mouse_pos):
+            controls_menu()
+        screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
+
+        display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
+        pygame.display.update()
+
+        clock.tick(60)
+
+    if quitted:
+        quit()
+
+
+def controls_menu():
+    return_button = ui.Button("Return", 640, 360, 500, 50, "large")
+    w_popup = ui.Popup("W", x=300, y=400)
+    a_popup = ui.Popup("A", x=220, y=480)
+    s_popup = ui.Popup("S", x=300, y=480)
+    d_popup = ui.Popup("D", x=380, y=480)
+    e_popup = ui.Popup("E", x=300, y=630)
+
+    cursor = pygame.image.load("assets/images/cursor.png")
+    cursor.set_colorkey((255, 255, 255))
+    pygame.mouse.set_visible(False)
+
+    clock = pygame.time.Clock()
+
+    in_menu = True
+    quitted = False
+    while in_menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                in_menu = False
+                quitted = True
+
+        scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
+
+        screen.fill((96, 178, 124))
+        ui.title("Controls",  640, 200, screen)
+        if return_button.draw(screen, volume, scaled_mouse_pos):
+            in_menu = False
+        w_popup.draw(screen)
+        a_popup.draw(screen)
+        s_popup.draw(screen)
+        d_popup.draw(screen)
+        e_popup.draw(screen)
+        ui.title("- Move", 800, 480, screen)
+        ui.title("- Open Chest", 850, 662, screen)
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
 
         display.blit(pygame.transform.scale(screen, (display_x, display_y)), (0, 0))
@@ -252,7 +303,7 @@ def size_menu():
                 display = pygame.display.set_mode((display_x, display_y))
                 click_timer = 15
             if full_button.draw(screen, volume, scaled_mouse_pos):
-                display = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+                display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                 display_x = display.get_width()
                 display_y = display.get_height()
                 click_timer = 15
@@ -266,7 +317,7 @@ def size_menu():
     if quitted:
         quit()
 
-def game_over(state, level):
+def game_over(state, level, checkpoint):
     play_button = ui.Button("Restart", 640, 360, 500, 50, "large")
     lobby_button = ui.Button("Lobby", 640, 435, 500, 50, "large")
     quit_button = ui.Button("Quit", 640, 510, 500, 50, "large")
@@ -290,6 +341,7 @@ def game_over(state, level):
             state = f"level {level}"
         if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
+            checkpoint = None
         if quit_button.draw(screen, volume, scaled_mouse_pos):
             state = "quit"
         screen.blit(cursor, (scaled_mouse_pos[0] - 16, scaled_mouse_pos[1] - 16))
@@ -299,7 +351,7 @@ def game_over(state, level):
 
         clock.tick(60)
 
-    return state
+    return state, checkpoint
 
 
 def win(state, level):
@@ -322,7 +374,10 @@ def win(state, level):
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
 
         screen.fill((96, 178, 124))
-        ui.title("Level Complete!",  640, 200, screen)
+        if level < 5:
+            ui.title("Level Complete!",  640, 200, screen)
+        else:
+            ui.title("Game Complete!",  640, 200, screen)
         if lobby_button.draw(screen, volume, scaled_mouse_pos):
             state = "lobby"
         if quit_button.draw(screen, volume, scaled_mouse_pos):
@@ -480,7 +535,7 @@ def lobby(state):  # sourcery skip: low-code-quality
     pause_button = ui.Button("", 40, 40, 64, 64, "pause")
 
     # load level from file
-    rooms, _, enemies, _, _, level_enters, locks = load_level(0)
+    rooms, _, enemies, _, _, level_enters, locks, _ = load_level(0)
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
@@ -495,11 +550,8 @@ def lobby(state):  # sourcery skip: low-code-quality
     else:
         exited = False
         for enter in level_enters:
-            print(enter.level)
             if enter.level == curr_enter - 1:
                 player = Player(state, keys, x=enter.rect.centerx - 32, y=enter.rect.centery - 32)
-
-    print(curr_enter)
 
     # initialize objects
     prev_pos = [player.rect.x, player.rect.y]
@@ -531,9 +583,9 @@ def lobby(state):  # sourcery skip: low-code-quality
 
         # sets the scroll value
         true_scroll[0] += (player.rect.x - (1280 / 2 - player.rect.width / 2)
-                        - true_scroll[0]) / 25 * dt
+                        - true_scroll[0]) / 10 * dt
         true_scroll[1] += (player.rect.y - (720 / 2 - player.rect.height / 2)
-                        - true_scroll[1]) / 25 * dt
+                        - true_scroll[1]) / 10 * dt
         scroll = [int(true_scroll[0]), int(true_scroll[1])]
 
         scaled_mouse_pos = [pygame.mouse.get_pos()[0] * 1280 / display_x, pygame.mouse.get_pos()[1] * 720 / display_y]
@@ -596,7 +648,7 @@ def lobby(state):  # sourcery skip: low-code-quality
     return state
 
 
-def game_loop(state):
+def game_loop(state, checkpoint):
     cursor = pygame.image.load("assets/images/cursor.png")
     cursor.set_colorkey((255, 255, 255))
     pygame.mouse.set_visible(False)
@@ -621,15 +673,26 @@ def game_loop(state):
 
     level = int(state[6])
     restart = False
+    if not checkpoint:
+        curr_checkpoint = 0
+    else:
+        curr_checkpoint = checkpoint
 
     # load level from file
-    rooms, chests, enemies, boss, end, _, locks = load_level(level)
+    rooms, chests, enemies, boss, end, _, locks, checkpoints = load_level(level)
     for room in rooms:
         room.tiles.load_rooms(rooms)
 
     # initialize objects
-    player = Player(state, keys)
-    prev_pos = [0, 0]
+    cp = False
+    for c in checkpoints:
+        if c.id == curr_checkpoint:
+            cp = True
+            player = Player(state, keys, x=c.rect.centerx - 32, y=c.rect.centery - 32)
+    if not cp:
+        print("a")
+        player = Player(state, keys)
+    prev_pos = [player.rect.x, player.rect.y]
 
     pygame.mixer.music.play(-1)
 
@@ -673,17 +736,14 @@ def game_loop(state):
                     player.active_item.mode = "attack"
                 elif isinstance(player.active_item, weapon.Bow):
                     player.active_item.mode = "load"
-                    print("a")
 
             if event.type == pygame.MOUSEBUTTONUP and (isinstance(player.active_item, weapon.Bow)) and (player.active_item.mode == "load"):
-                print(player.active_item.mode)
                 player.active_item.mode = "attack"
                 player.active_item.strength = min(player.active_item.animation.frame / 15, 4)
 
         if isinstance(player.active_item, weapon.Bow) and (player.active_item.mode == "load"):
             zoom = 1 + min(player.active_item.animation.frame / 360, 1/6)
             va = player.active_item.animation.frame * 2
-            print("a")
         else:
             va = 0
             zoom = 1
@@ -692,6 +752,8 @@ def game_loop(state):
         # gets key inputs
         key_pressed = pygame.key.get_pressed()
         movement = [0, 0]
+        if key_pressed[pygame.K_r]:
+            player.health = 0
         movement[0] = key_pressed[controls["right"]] - key_pressed[controls["left"]]
         movement[1] = key_pressed[controls["down"]] - key_pressed[controls["up"]]
 
@@ -712,9 +774,9 @@ def game_loop(state):
 
         # sets the scroll value
         true_scroll[0] += ((player.rect.x - (1280 / 2 - player.rect.width / 2)
-                        - true_scroll[0]) / 25 * dt) + 10 * math.sin(5 * int(shake_timer))
+                        - true_scroll[0]) / 10 * dt) + 10 * math.sin(5 * int(shake_timer))
         true_scroll[1] += ((player.rect.y - (720 / 2 - player.rect.height / 2)
-                        - true_scroll[1]) / 25 * dt) + 2 * math.sin(5 * int(shake_timer))
+                        - true_scroll[1]) / 10 * dt) + 2 * math.sin(5 * int(shake_timer))
         if boss and (boss.bossfight):
             if true_scroll[0] > boss.rect.centerx + 1024:
                 true_scroll[0] = boss.rect.centerx + 1024
@@ -747,6 +809,9 @@ def game_loop(state):
             player.rect.topleft = prev_pos
         for lock in locks:
             shake = shake or lock.check_collision(player)
+        for checkpoint in checkpoints:
+            if checkpoint.update(player, dt, curr_checkpoint):
+                curr_checkpoint = checkpoint.id
         death_particles.update(dt)
         for i, e in sorted(enumerate(enemies), reverse=True):
             e.move(player, dt, rooms, volume)
@@ -811,6 +876,8 @@ def game_loop(state):
             end.draw(screen, scroll)
         for lock in locks:
             lock.draw(screen, scroll)
+        for checkpoint in checkpoints:
+            checkpoint.draw(screen, scroll)
         player.draw(screen, scroll)
         for e in enemies:
             e.draw(screen, scroll)
@@ -850,11 +917,12 @@ def game_loop(state):
         pt = now
 
     pygame.mixer.music.fadeout(1000)
-    return state, level
+    return state, level, curr_checkpoint
 
 # set the state of the window
 state = "main menu"
-keys = ["20"]
+checkpoint = None
+keys = ["20", "40", "50"]
 running = True
 while running:
     if state == "main menu":
@@ -862,11 +930,11 @@ while running:
     elif state == "lobby":
         state = lobby(state)
     elif state[:5] == "level":
-        state, level = game_loop(state)
+        state, level, checkpoint = game_loop(state, checkpoint)
     elif state == "win":
         state = win(state, level)
     elif state == "game over":
-        state = game_over(state, level)
+        state, checkpoint = game_over(state, level, checkpoint)
     if state == "quit":
         running = False
 
